@@ -954,9 +954,15 @@ function renderCalendar(){
     let titleAttr = "";
     if(isStop){
       if(isAllHotelsView){
-        const hotelsHere = (allHotelsMap[dNum] || []).sort((a,b)=>a.localeCompare(b));
-        tagsHtml = `<div class="cal-tags">${buildTagsHtml(hotelsHere.map(abbreviateHotelName))}</div>`;
-        titleAttr = escapeHTML(hotelsHere.join(", "));
+        const { tags, details } = allHotelsRoomsStoppedOnDay(dNum);
+        if(tags.length){
+          tagsHtml = `<div class="cal-tags">${buildTagsHtml(tags)}</div>`;
+          titleAttr = escapeHTML(details.join(", "));
+        } else {
+          const hotelsHere = (allHotelsMap[dNum] || []).sort((a,b)=>a.localeCompare(b));
+          tagsHtml = `<div class="cal-tags">${buildTagsHtml(hotelsHere.map(abbreviateHotelName))}</div>`;
+          titleAttr = escapeHTML(hotelsHere.join(", "));
+        }
       } else if(isAllRoomsView){
         const names = hotelRoomsStoppedOnDay(hotel, dNum);
         tagsHtml = `<div class="cal-tags">${buildTagsHtml(names.map(abbreviateRoomName))}</div>`;
@@ -1034,6 +1040,33 @@ function hotelRoomsStoppedOnDay(hotel, dayNum){
     if(effectiveDayNumbers(hotel, key).has(dayNum)) names.push(rooms[key].display || key);
   });
   return names;
+}
+
+function allHotelsRoomsStoppedOnDay(dayNum){
+  const tags = [];
+  const details = [];
+  const hotelKeys = Object.keys(hotelData).sort((a,b)=>a.localeCompare(b));
+  const isMultiHotel = hotelKeys.length > 1;
+
+  hotelKeys.forEach(hotel => {
+    const rooms = hotelRoomsStoppedOnDay(hotel, dayNum);
+    if(rooms.length){
+      rooms.forEach(r => {
+        const abbr = abbreviateRoomName(r);
+        tags.push(isMultiHotel ? `${abbreviateHotelName(hotel)}:${abbr}` : abbr);
+        details.push(`${hotel} — ${r}`);
+      });
+    } else {
+      const unionDays = hotelUnionDayNumbers(hotel);
+      if(unionDays.has(dayNum)){
+        const label = t[currentLang].allRoomTypes;
+        tags.push(isMultiHotel ? `${abbreviateHotelName(hotel)}:${label}` : label);
+        details.push(`${hotel} — ${label}`);
+      }
+    }
+  });
+
+  return { tags, details };
 }
 
 function normalize(s){ return String(s||"").toLowerCase().trim().replace(/\s+/g," "); }
