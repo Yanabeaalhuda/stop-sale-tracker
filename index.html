@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Yanabea Alhuda | Stop Sale Tracker</title>
+<script src="files/xlsx.full.min.js"></script>
+<script>
+  if (typeof XLSX === 'undefined') {
+    document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"><\/script>');
+  }
+</script>
+<style>
+  :root{
+    --burgundy:#6f1028;--burgundy-dark:#420817;--gold:#d4af62;--gold-light:#ffe2a0;
+    --bg:#f6efe6;--card:#fff;--text:#202020;--muted:#6f6f6f;--border:#eadfce;
+    --green:#087a36;--red:#b00020;--orange:#b56a00;--shadow:0 10px 28px rgba(70,30,20,.10);
+  }
+  *{box-sizing:border-box}
+  *:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#fbfaf7,#efe3d4);color:var(--text);min-height:100vh}
+  body[dir="rtl"] th,body[dir="rtl"] td{text-align:right}
+  body[dir="rtl"] .choice-card{text-align:right}
+  .hero{position:relative;overflow:hidden;background:linear-gradient(90deg,rgba(65,6,22,.93),rgba(100,16,42,.82)), url("files/SLOGAN.png");background-size:cover;background-position:center;border-bottom:5px solid var(--gold);color:#fff;padding:24px 24px 20px;transition:background-image .25s ease}
+  .hero-inner{max-width:1400px;margin:auto}
+  .brand{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap;text-align:center}
+  .brand img{width:112px;height:112px;object-fit:cover;border-radius:50%;border:2px solid rgba(212,175,98,.85);box-shadow:0 10px 35px rgba(0,0,0,.35)}
+  .brand h1{margin:0;font-size:30px;color:#fff4d9;letter-spacing:.3px}
+  .brand p.tag{margin:6px 0 0;color:var(--gold-light);font-size:15px}
+  .slogan{margin:18px auto 10px;max-width:760px;padding:13px 20px;border:1px solid rgba(212,175,98,.60);border-radius:18px;background:rgba(45,5,18,.45);color:#ffe7ad;font-size:18px;text-align:center}
+  .lang{display:flex;justify-content:center;gap:6px;margin:14px 0 0}
+  .lang button{width:auto;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);color:#fff;padding:9px 18px;cursor:pointer;font-weight:bold}
+  .lang button.active{background:var(--gold);color:#2b1a02}
+  main{padding:22px;max-width:1400px;margin:auto}
+  .grid{display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:16px;margin-bottom:18px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:18px;margin-bottom:18px}
+  .metric .label{color:var(--muted);font-size:13px}.metric .value{font-size:26px;font-weight:bold;color:var(--burgundy);margin-top:8px;word-break:break-word}
+  .metric.alert .value{color:var(--red)}
+  h2{margin:0 0 12px;color:var(--burgundy);font-size:21px}
+  .source-status{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:12px;background:#fff8e8;border:1px solid rgba(212,175,98,.42);font-size:13px;font-weight:bold;color:#4a2500;margin-bottom:14px}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .dot.ok{background:var(--green)}.dot.warn{background:var(--orange)}.dot.err{background:var(--red)}
+  .refresh-btn{background:#fff;color:var(--burgundy);border:1px solid var(--burgundy);border-radius:10px;padding:8px 14px;font-weight:bold;cursor:pointer;font-size:12px}
+  .refresh-btn:hover{background:#fff3e0}
+  .upload-zone{border:2px dashed var(--gold);border-radius:16px;padding:22px;text-align:center;background:#fff8e8;cursor:pointer;transition:.15s}
+  .upload-zone:hover{background:#fff2d6}
+  .upload-zone.dragover{background:#ffe9b8;border-color:var(--burgundy)}
+  .upload-zone input{display:none}
+  .upload-icon{font-size:30px;margin-bottom:8px}
+  .upload-title{font-weight:bold;color:var(--burgundy);font-size:15px}
+  .upload-sub{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.5}
+  .file-list{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px}
+  .file-chip{background:#fff;border:1px solid var(--gold);color:var(--burgundy);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:bold}
+  .clear-btn{margin-top:14px;background:#fff;color:var(--burgundy);border:1px solid var(--burgundy);border-radius:12px;padding:10px 16px;font-weight:bold;cursor:pointer}
+  .clear-btn:hover{background:#fff3e0}
+  .searchbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .searchbar input{flex:1;min-width:220px}
+  input,button,select{border-radius:12px;padding:12px;font-size:15px}
+  input,select{width:100%;border:1px solid #ddd;background:#fff;color:#222}
+  button{border:0;background:var(--burgundy);color:#fff;font-weight:bold;cursor:pointer;padding:12px 18px}
+  .toggles{display:flex;flex-wrap:wrap;gap:10px 20px;margin-top:12px;padding:10px 12px;border-radius:12px;background:#fff8e8;border:1px solid rgba(212,175,98,.42);color:#4a2500;font-size:13px;font-weight:bold}
+  .toggles label{display:flex;align-items:center;gap:8px;cursor:pointer}
+  .toggles input[type="checkbox"]{width:18px;height:18px;accent-color:var(--burgundy)}
+  .note{color:#777;font-size:13px;line-height:1.6}
+  .asof{display:inline-block;margin-top:8px;background:#fff;border:1px solid var(--gold);color:var(--burgundy);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:bold}
+  .hotel-card{border:1px solid var(--border);border-radius:16px;margin-bottom:14px;overflow:hidden;background:#fff}
+  .hotel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 16px;background:#fdf7ec;border-bottom:1px solid var(--border);cursor:pointer}
+  .hotel-name{font-weight:bold;color:var(--burgundy);font-size:17px}
+  .hotel-badges{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .badge{display:inline-block;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:bold;white-space:nowrap}
+  .badge.active{background:#fdeceb;color:var(--red);border:1px solid rgba(176,0,32,.3)}
+  .badge.upcoming{background:#fff4e0;color:var(--orange);border:1px solid rgba(181,106,0,.3)}
+  .badge.clear{background:#eafaf0;color:var(--green);border:1px solid rgba(8,122,54,.3)}
+  .badge.count{background:#eee;color:#555;border:1px solid #ddd}
+  .hotel-body.collapsed{display:none}
+  .table-wrap{overflow:auto;-webkit-overflow-scrolling:touch}
+  table{width:100%;border-collapse:collapse;background:#fff}
+  th{position:sticky;top:0;background:var(--burgundy);color:#fff;text-align:left;padding:10px 12px;font-size:13px;white-space:nowrap;z-index:1}
+  td{border-bottom:1px solid #eee;padding:10px 12px;vertical-align:middle;color:#222;font-size:13px}
+  tr:hover td{background:#fffaf1}
+  .range-chip{display:inline-block;background:#fdeceb;color:var(--burgundy);border:1px solid rgba(176,0,32,.25);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:bold;margin:2px 4px 2px 0}
+  .range-chip.upcoming{background:#fff4e0;border-color:rgba(181,106,0,.3)}
+  .status-pill{font-size:11px;font-weight:bold;border-radius:999px;padding:4px 9px;display:inline-block}
+  .status-pill.active{background:var(--red);color:#fff}
+  .status-pill.upcoming{background:var(--orange);color:#fff}
+  .empty-state{padding:40px 20px;text-align:center;color:var(--muted)}
+  .empty-state .big{font-size:40px;margin-bottom:10px}
+  .footer{color:var(--burgundy);font-size:14px;font-weight:bold;letter-spacing:.5px;text-align:center;margin:18px}
+  .chev{transition:.2s;color:var(--gold);font-weight:bold;font-size:14px}
+  .chev.open{transform:rotate(90deg)}
+
+  .cal-controls{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+  .cal-field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:bold;color:var(--burgundy);min-width:200px;flex:1}
+  .cal-nav{display:flex;align-items:center;gap:8px;margin-left:auto;background:#fdf7ec;border:1px solid var(--border);border-radius:12px;padding:6px}
+  .cal-nav button{padding:8px 12px;border-radius:8px;font-size:15px;line-height:1}
+  .cal-nav button.today-btn{padding:8px 14px;font-size:12px}
+  .cal-month-label{font-weight:bold;color:var(--burgundy);font-size:16px;min-width:150px;text-align:center}
+  .cal-shell{border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 4px 16px rgba(70,30,20,.06)}
+  .cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);background:linear-gradient(90deg,var(--burgundy-dark),var(--burgundy))}
+  .cal-dow{text-align:center;font-size:12px;font-weight:bold;color:#fff4d9;padding:10px 0;letter-spacing:.4px;text-transform:uppercase}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border)}
+  .cal-day{min-height:78px;background:#fff;display:flex;flex-direction:column;padding:8px;position:relative;transition:.15s}
+  .cal-day.empty{background:#faf7f2}
+  .cal-day .dnum{font-size:13px;font-weight:bold;color:#333;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+  .cal-day.today .dnum{background:var(--gold);color:#3a2400}
+  .cal-day.stop{background:#fdeceb}
+  .cal-day.stop::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--red)}
+  .cal-day.stop .dnum{color:var(--red)}
+  .cal-day.open .status-dot{background:var(--green)}
+  .cal-day.stop .status-dot{background:var(--red)}
+  .cal-day .cal-tags{margin-top:auto;display:flex;flex-wrap:wrap;gap:3px}
+  .cal-day .cal-tag{font-size:10px;font-weight:bold;border-radius:999px;padding:2px 6px;display:inline-flex;align-items:center}
+  .cal-day.stop .cal-tag{background:var(--red);color:#fff}
+  .cal-day .cal-tag.more{background:#f0d9db;color:var(--burgundy)}
+  select:disabled{background:#f2f0ec;color:#aaa;cursor:not-allowed}
+  .cal-day.past{opacity:.45}
+  .cal-day.past.stop::before{background:#c98891}
+  .cal-day:hover:not(.empty){box-shadow:inset 0 0 0 2px var(--gold);z-index:2}
+  .cal-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-size:12.5px;color:var(--muted);align-items:center}
+  .cal-legend .swatch{width:13px;height:13px;border-radius:4px;display:inline-block;margin-right:6px;vertical-align:middle}
+  .cal-hint{font-size:12px;color:var(--muted);margin-top:10px;font-style:italic}
+  @media(max-width:1024px){
+    .hero{padding:18px}.brand img{width:96px;height:96px}.brand h1{font-size:23px}.brand p.tag,.slogan{font-size:14px}
+    main{padding:16px}.grid{grid-template-columns:repeat(2,1fr)}th,td{font-size:12px;padding:8px}
+  }
+  @media(max-width:760px){
+    .grid{grid-template-columns:1fr 1fr}.brand{flex-direction:column;gap:10px}
+    .brand img{width:80px;height:80px}.brand h1{font-size:19px}.slogan{padding:12px;margin-top:12px}
+    main{padding:10px}.card{padding:13px;border-radius:14px}.metric .value{font-size:20px}
+    table{min-width:560px}.cal-day{min-height:56px;padding:5px}.cal-day .dnum{font-size:11px;width:18px;height:18px}
+    .cal-day .cal-tag{font-size:9px;padding:2px 5px}.cal-nav{margin-left:0;width:100%;justify-content:center}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero" id="heroHeader">
+  <div class="hero-inner">
+    <div class="brand">
+      <img id="brandLogo" src="files/LOGO.png" alt="Yanabea Alhuda Logo" onerror="this.style.display='none'">
+      <div>
+        <h1 data-i18n="title">Yanabea Alhuda Stop Sale Tracker</h1>
+        <p class="tag" data-i18n="tag">See stop-sale dates for every hotel, instantly</p>
+      </div>
+    </div>
+    <div class="slogan" data-i18n="slogan">Peaceful Stay... for a Blessed Journey</div>
+    <div class="lang">
+      <button id="enBtn" onclick="setLang('en')" class="active">English</button>
+      <button id="arBtn" onclick="setLang('ar')">العربية</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="grid">
+    <div class="card metric"><div class="label" data-i18n="totalHotels">Hotels Loaded</div><div class="value" id="mHotels">0</div></div>
+    <div class="card metric alert"><div class="label" data-i18n="activeStops">Active Stop Sales</div><div class="value" id="mActive">0</div></div>
+    <div class="card metric"><div class="label" data-i18n="upcomingStops">Upcoming Stop Sales</div><div class="value" id="mUpcoming">0</div></div>
+    <div class="card metric"><div class="label" data-i18n="dataStatus">Data Status</div><div class="value" id="mStatus">—</div></div>
+  </section>
+
+  <section class="card" style="display:none">
+    <h2 data-i18n="dataSourceTitle">Data Source</h2>
+    <div class="source-status" id="sourceStatus">
+      <span class="dot warn" id="sourceDot"></span>
+      <span id="sourceText" data-i18n="checkingRepo">Checking repository data file...</span>
+      <button type="button" class="refresh-btn" onclick="loadFromRepo(true)" data-i18n="refreshBtn">Refresh from GitHub</button>
+    </div>
+
+    <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()" style="display:none">
+      <div class="upload-icon">📤</div>
+      <div class="upload-title" data-i18n="uploadPrompt">Or click here to preview a file from your computer (this session only)</div>
+      <div class="upload-sub" data-i18n="uploadSub">To update the tracker for everyone, upload any .xlsx workbook into the <b>data/</b> folder of the GitHub repo and push — the site auto-detects it, no fixed file name needed. A manual upload here only previews a file in your own browser and is not saved anywhere.</div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls" multiple onchange="handleManualFiles(this.files)">
+    </div>
+    <div class="file-list" id="fileList" style="display:none"></div>
+    <button type="button" class="clear-btn" id="clearBtn" onclick="clearManualFiles()" style="display:none" data-i18n="clearFiles">Clear preview &amp; reload from GitHub</button>
+    <div class="note" id="asofNote" style="margin-top:14px"></div>
+  </section>
+
+  <section class="card">
+    <h2 data-i18n="calendarTitle">Calendar View</h2>
+    <div class="cal-controls">
+      <label class="cal-field">
+        <span data-i18n="hotelLabel">Hotel</span>
+        <select id="calHotelSelect" autocomplete="off" onchange="onCalHotelChange()"></select>
+      </label>
+      <label class="cal-field">
+        <span data-i18n="roomLabel">Room Type</span>
+        <select id="calRoomSelect" autocomplete="off" onchange="renderCalendar()"></select>
+      </label>
+      <div class="cal-nav">
+        <button type="button" onclick="shiftCalMonth(-1)">←</button>
+        <div class="cal-month-label" id="calMonthLabel">—</div>
+        <button type="button" onclick="shiftCalMonth(1)">→</button>
+        <button type="button" class="today-btn" onclick="goToTodayMonth()" data-i18n="todayBtn">Today</button>
+      </div>
+    </div>
+    <div class="cal-shell">
+      <div class="cal-dow-row" id="calDow"></div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+    <div class="cal-hint" id="calHint" data-i18n="calHint">Tip: hover over a stop-sale day to see which room types are affected.</div>
+    <div class="cal-legend">
+      <span><span class="swatch" style="background:var(--red)"></span><span data-i18n="legendStop">Stop Sale</span></span>
+      <span><span class="swatch" style="background:#fff;border:1px solid var(--border)"></span><span data-i18n="legendOpen">Open to Sale</span></span>
+      <span><span class="swatch" style="background:#faf7f2;border:1px solid var(--border)"></span><span data-i18n="legendPast">Past date</span></span>
+      <span><span class="swatch" style="background:var(--gold)"></span><span data-i18n="legendToday">Today</span></span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 data-i18n="resultsTitle">Stop Sale Results</h2>
+    <div class="searchbar">
+      <input id="hotelSearch" oninput="render()" placeholder="Search hotel name..." data-i18n-ph="searchPh">
+    </div>
+    <div class="toggles">
+      <label>
+        <input id="onlyAffected" type="checkbox" checked onchange="render()">
+        <span data-i18n="onlyAffected">Show only hotels with stop-sale dates</span>
+      </label>
+      <label>
+        <input id="expandAll" type="checkbox" checked onchange="toggleExpandAll()">
+        <span data-i18n="expandAll">Expand all hotels</span>
+      </label>
+    </div>
+    <div id="resultsWrap" style="margin-top:16px"></div>
+  </section>
+
+  <div class="footer">COPYRIGHTS YANABEA ALHUDA 2026</div>
+</main>
+
+<script>
+/* ============================================================
+   TIMEZONE-SAFE DATE HANDLING
+   Excel serial numbers are converted to a plain integer
+   "day number" (days since the Unix epoch, calendar-only,
+   no time-of-day, no local-timezone math). This avoids the
+   classic SheetJS cellDates bug where new Date() objects can
+   land on the wrong calendar day depending on the browser's
+   timezone (confirmed to shift dates by -1 day in some zones).
+   All comparisons/grouping use these integers; a JS Date is
+   only ever created at final render time, and always read
+   back using getUTC*() so no local-timezone conversion happens.
+   ============================================================ */
+const MS_PER_DAY = 86400000;
+const EXCEL_EPOCH_OFFSET = 25569; // days between Excel's day-0 (1899-12-30) and Unix epoch (1970-01-01)
+
+function serialToDayNumber(serial){
+  return Math.round(serial) - EXCEL_EPOCH_OFFSET;
+}
+function dayNumberToDate(dayNum){
+  return new Date(dayNum * MS_PER_DAY); // UTC midnight of that calendar day
+}
+function todayDayNumber(){
+  const now = new Date();
+  return Math.round(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / MS_PER_DAY);
+}
+function fmtDayNumber(dayNum){
+  const d = dayNumberToDate(dayNum);
+  const months=currentLang==="ar"
+    ? ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"]
+    : ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${d.getUTCDate()} ${months[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+let currentLang = localStorage.getItem("lang_stopsale") || "en";
+let today = todayDayNumber();
+
+const DATA_FOLDER = "data";
+const DATA_URL_FALLBACK = "data/stop-sale.xlsx"; // used if folder auto-discovery isn't possible
+
+// Looks through THIS ENTIRE GitHub repo — every file, at any depth, in any
+// folder, no matter what it's named — for the workbook AND the brand
+// images (logo / hero banner). Uses the GitHub "git tree" API with
+// recursive=1, which returns the whole file tree in a single call, instead
+// of listing folder-by-folder (which used to miss anything more than one
+// folder deep, and burned through GitHub's unauthenticated rate limit of
+// 60 requests/hour if you refreshed a few times while testing).
+// Results are cached in localStorage so that if a lookup ever fails
+// (rate limit, network hiccup, temporary GitHub outage) the app keeps
+// showing the last successfully-found logo/slogan/workbook instead of
+// silently losing them.
+async function ghRepoCoords(){
+  const host = location.hostname; // e.g. "someuser.github.io"
+  if(!host.endsWith("github.io")) return null;
+  const owner = host.split(".")[0];
+  const repo = location.pathname.split("/").filter(Boolean)[0];
+  if(!owner || !repo) return null;
+  return {owner, repo};
+}
+const IMAGE_EXT_RE = /\.(png|jpe?g|webp|gif|svg)$/i;
+const ASSET_CACHE_KEY = "repoAssetsCache_v2";
+
+function loadCachedAssets(){
+  try{
+    const raw = localStorage.getItem(ASSET_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function saveCachedAssets(assets){
+  try{ localStorage.setItem(ASSET_CACHE_KEY, JSON.stringify(assets)); }catch(e){}
+}
+
+async function discoverRepoAssets(){
+  const coords = await ghRepoCoords();
+  if(!coords) return loadCachedAssets();
+  const {owner, repo} = coords;
+
+  try{
+    // 1) Find the repo's default branch (main/master/whatever it's called).
+    const infoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {cache:"no-store"});
+    if(!infoRes.ok) throw new Error("repo lookup failed: HTTP "+infoRes.status);
+    const info = await infoRes.json();
+    const branch = info.default_branch || "main";
+
+    // 2) Fetch the FULL file tree in one shot
+    const treeRes = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`,
+      {cache:"no-store"}
+    );
+    if(!treeRes.ok) throw new Error("tree lookup failed: HTTP "+treeRes.status);
+    const treeData = await treeRes.json();
+    const items = Array.isArray(treeData.tree) ? treeData.tree : [];
+    if(treeData.truncated){
+      console.warn("Repo file tree was truncated by the GitHub API (repo very large) — some files may not be found.");
+    }
+
+    const xlsxFiles = [];
+    const imageFiles = [];
+    items.forEach(it=>{
+      if(it.type !== "blob") return;
+      const name = it.path.split("/").pop();
+      if(/\.xlsx?$/i.test(name)) xlsxFiles.push({name, path: it.path});
+      else if(IMAGE_EXT_RE.test(name)) imageFiles.push({name, path: it.path});
+    });
+
+    xlsxFiles.sort((a,b)=>a.name.localeCompare(b.name));
+    
+    // Find all Excel files inside data/ folder, fallback to any excel file anywhere in repo
+    const dataFolderXlsx = xlsxFiles.filter(f => f.path.startsWith("data/"));
+    const targetXlsxList = dataFolderXlsx.length ? dataFolderXlsx : xlsxFiles;
+
+    const findImage = re => imageFiles.find(f=>re.test(f.name)) || null;
+    const logo = findImage(/logo/i);
+    const slogan = findImage(/slogan|banner|hero|cover/i);
+
+    const rawBase = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/`;
+    const toRawUrl = path => rawBase + path.split("/").map(encodeURIComponent).join("/");
+
+    const result = {
+      xlsxList: targetXlsxList.map(f => ({ url: toRawUrl(f.path), name: f.name, path: f.path })),
+      logoUrl: logo ? toRawUrl(logo.path) : null,
+      sloganUrl: slogan ? toRawUrl(slogan.path) : null
+    };
+    saveCachedAssets(result);
+    return result;
+  }catch(e){
+    console.warn("Repo asset discovery failed, falling back to last known result:", e);
+    return loadCachedAssets();
+  }
+}
+
+// ------------------------------------------------------------------
+// API-INDEPENDENT FALLBACK
+// ------------------------------------------------------------------
+const CANDIDATE_FOLDERS = ["data", "files", "assets", ""];
+const CANDIDATE_LOGO_NAMES = ["LOGO.png","logo.png","LOGO.jpg","logo.jpg","logo.webp","logo.svg"];
+const CANDIDATE_SLOGAN_NAMES = ["SLOGAN.png","slogan.png","SLOGAN.jpg","slogan.jpg","banner.png","hero.png"];
+const CANDIDATE_XLSX_NAMES = [
+  "stop-sale.xlsx","Stop-Sale.xlsx","stop_sale.xlsx","StopSale.xlsx","stopsale.xlsx",
+  "Availability Calendar.xlsx","Copy of Availability Calendar.xlsx","Copy of Availability Calendar (1).xlsx",
+  "AvailabilityCalendar.xlsx","Availability_Calendar.xlsx","calendar.xlsx","Calendar.xlsx",
+  "data.xlsx","Data.xlsx","tracker.xlsx","export.xlsx","sheet.xlsx","report.xlsx",
+  "hotel.xlsx","hotels.xlsx","yanabea.xlsx","Yanabea.xlsx"
+];
+
+async function discoverManifestAssets(){
+  const manifestPaths = ["data/manifest.json", "data/files.json", "manifest.json", "files.json"];
+  for (const path of manifestPaths){
+    try {
+      const res = await fetch(path + "?v=" + Date.now(), {cache:"no-store"});
+      if(res.ok){
+        const list = await res.json();
+        if(Array.isArray(list) && list.length){
+          return list.map(item => {
+            const filePath = typeof item === "string" ? item : (item.path || item.url || item.name);
+            const fileName = filePath.split("/").pop();
+            return { url: filePath, name: fileName, path: filePath };
+          });
+        }
+      }
+    } catch(e) {}
+  }
+  return null;
+}
+
+function buildCandidateUrls(folders, names){
+  const urls = [];
+  folders.forEach(folder=>{ names.forEach(name=>{ urls.push(folder ? `${folder}/${name}` : name); }); });
+  return urls;
+}
+// Probes candidate URLs in small batches using HEAD requests
+async function probeAnyExisting(urls){
+  const BATCH_SIZE = 4;
+  for(let i = 0; i < urls.length; i += BATCH_SIZE){
+    const batch = urls.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(batch.map(async url => {
+      try {
+        const res = await fetch(url, { method: "HEAD", cache: "no-store" });
+        return (res.ok || res.status === 405) ? url : null;
+      } catch(e) { return null; }
+    }));
+    const found = results.find(Boolean);
+    if(found) return found;
+  }
+  return null;
+}
+async function probeAllExisting(urls){
+  const BATCH_SIZE = 4;
+  const foundUrls = [];
+  for(let i = 0; i < urls.length; i += BATCH_SIZE){
+    const batch = urls.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(batch.map(async url => {
+      try {
+        const res = await fetch(url, { method: "HEAD", cache: "no-store" });
+        return (res.ok || res.status === 405) ? url : null;
+      } catch(e) { return null; }
+    }));
+    results.filter(Boolean).forEach(u => foundUrls.push(u));
+  }
+  return foundUrls;
+}
+async function fillMissingAssetsViaProbe(assets){
+  const result = assets ? {...assets} : { xlsxList:[], logoUrl:null, sloganUrl:null };
+  if(!result.xlsxList) {
+    result.xlsxList = result.xlsx ? [result.xlsx] : [];
+  }
+
+  // First check if manifest.json or files.json exists in data/ folder
+  if(!result.xlsxList.length){
+    const manifestList = await discoverManifestAssets();
+    if(manifestList && manifestList.length){
+      result.xlsxList = manifestList;
+    }
+  }
+
+  const tasks = [];
+  if(!result.logoUrl){
+    tasks.push(probeAnyExisting(buildCandidateUrls(CANDIDATE_FOLDERS, CANDIDATE_LOGO_NAMES)).then(url=>{ if(url) result.logoUrl = url; }));
+  }
+  if(!result.sloganUrl){
+    tasks.push(probeAnyExisting(buildCandidateUrls(CANDIDATE_FOLDERS, CANDIDATE_SLOGAN_NAMES)).then(url=>{ if(url) result.sloganUrl = url; }));
+  }
+  if(!result.xlsxList.length){
+    tasks.push(probeAllExisting(buildCandidateUrls(CANDIDATE_FOLDERS, CANDIDATE_XLSX_NAMES)).then(urls=>{
+      if(urls.length){
+        result.xlsxList = urls.map(u => ({ url: u, name: u.split("/").pop(), path: u }));
+      }
+    }));
+  }
+  await Promise.all(tasks);
+  return result;
+}
+
+// Applies whatever logo / hero-banner images were found in the repo. If
+// none are found, the logo circle simply stays hidden and the hero keeps
+// its plain burgundy gradient — no broken-image icon, no layout shift.
+function applyBrandAssets(assets){
+  const logo = document.getElementById("brandLogo");
+  const hero = document.getElementById("heroHeader");
+  if(assets && assets.logoUrl){
+    logo.src = assets.logoUrl;
+    logo.style.display = "";
+  }
+  if(assets && assets.sloganUrl){
+    hero.style.backgroundImage =
+      `linear-gradient(90deg,rgba(65,6,22,.93),rgba(100,16,42,.82)), url("${assets.sloganUrl}")`;
+  }
+}
+
+// hotelData[hotel][roomKey] = { display, dayNumbers:Set }
+let hotelData = {};
+let isManualPreview = false;
+let manualFileNames = [];
+
+const t = {
+  en:{
+    title:"Yanabea Alhuda Stop Sale Tracker",
+    tag:"See stop-sale dates for every hotel, instantly",
+    slogan:"Peaceful Stay... for a Blessed Journey",
+    totalHotels:"Hotels Loaded",activeStops:"Active Stop Sales",upcomingStops:"Upcoming Stop Sales",dataStatus:"Data Status",
+    loading:"Loading",ready:"Ready",error:"Error",noFile:"No data yet",
+    dataSourceTitle:"Data Source",
+    checkingRepo:"Checking repository data file...",
+    refreshBtn:"Refresh from GitHub",
+    repoLoaded:"Loaded from GitHub:",
+    repoMissing:"Couldn't find data/stop-sale.xlsx in this deployment yet — upload the workbook to your GitHub repo at that path, or preview a file below.",
+    repoLoadFailed:"Could not load data/stop-sale.xlsx (fetch failed). If you're opening this file directly (file://) instead of through a web server, browsers block that — use the upload box below instead, or serve this via GitHub Pages / Vercel.",
+    previewing:"Previewing local file(s), not the GitHub version:",
+    uploadPrompt:"Or click here to preview a file from your computer (this session only)",
+    uploadSub:"To update the tracker for everyone, upload any .xlsx workbook into the <b>data/</b> folder of the GitHub repo and push — the site auto-detects it, no fixed file name needed. A manual upload here only previews a file in your own browser and is not saved anywhere.",
+    clearFiles:"Clear preview &amp; reload from GitHub",
+    calendarTitle:"Calendar View",
+    hotelLabel:"Hotel",roomLabel:"Room Type",todayBtn:"Today",
+    legendStop:"Stop Sale",legendOpen:"Open to Sale",legendPast:"Past date",legendToday:"Today",
+    noCalData:"Upload or load stop-sale data to see the calendar.",
+    calHint:"Tip: hover over a stop-sale day to see which room types are affected.",
+    allHotels:"All Hotels",
+    allRoomTypes:"All Room Types",
+    roomWord:"room",roomsWord:"rooms",
+    resultsTitle:"Stop Sale Results",
+    searchPh:"Search hotel name...",
+    onlyAffected:"Show only hotels with stop-sale dates",
+    expandAll:"Expand all hotels",
+    roomType:"Room Type",stopPeriods:"Stop Sale Period(s)",status:"Status",
+    active:"Active now",upcoming:"Upcoming",
+    noStopSale:"No stop-sale dates",
+    noHotels:"No hotels found yet.",
+    noMatch:"No hotels match your search / filters.",
+    asOf:"Showing stop-sale dates from",
+    onward:"onward — past dates are hidden automatically in this list (browse the calendar above for any month).",
+    filesParsed:"file(s) parsed",
+    dow:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]
+  },
+  ar:{
+    title:"متابعة تواريخ إيقاف البيع - ينابيع الهدى",
+    tag:"تعرف على تواريخ إيقاف البيع لكل فندق فوراً",
+    slogan:"سكن مطمئن... لرحلة مباركة",
+    totalHotels:"الفنادق المحمّلة",activeStops:"إيقاف بيع فعّال الآن",upcomingStops:"إيقاف بيع قادم",dataStatus:"حالة البيانات",
+    loading:"جاري التحميل",ready:"جاهز",error:"خطأ",noFile:"لا توجد بيانات بعد",
+    dataSourceTitle:"مصدر البيانات",
+    checkingRepo:"جاري التحقق من ملف البيانات في المستودع...",
+    refreshBtn:"تحديث من GitHub",
+    repoLoaded:"تم التحميل من GitHub:",
+    repoMissing:"لم يتم العثور على data/stop-sale.xlsx في هذا الموقع بعد — قم برفع ملف الإكسل إلى المستودع في هذا المسار، أو جرّب معاينة ملف بالأسفل.",
+    repoLoadFailed:"تعذّر تحميل data/stop-sale.xlsx. إذا كنت تفتح هذا الملف مباشرة (file://) فإن المتصفحات تمنع ذلك — استخدم صندوق الرفع بالأسفل، أو قم بنشر الموقع عبر GitHub Pages / Vercel.",
+    previewing:"يتم معاينة ملف/ملفات محلية، وليست نسخة GitHub:",
+    uploadPrompt:"أو اضغط هنا لمعاينة ملف من جهازك (لهذه الجلسة فقط)",
+    uploadSub:"لتحديث المتابعة لجميع المستخدمين، قم برفع أي ملف إكسل (.xlsx) داخل مجلد <b>data/</b> في مستودع GitHub وقم بالدفع (push) — سيتعرف الموقع عليه تلقائياً بدون الحاجة لاسم ملف ثابت. الرفع اليدوي هنا لمعاينة شخصية فقط ولا يتم حفظه.",
+    clearFiles:"إزالة المعاينة والتحميل من GitHub",
+    calendarTitle:"عرض التقويم",
+    hotelLabel:"الفندق",roomLabel:"نوع الغرفة",todayBtn:"اليوم",
+    legendStop:"إيقاف بيع",legendOpen:"متاح للبيع",legendPast:"تاريخ ماضي",legendToday:"اليوم",
+    noCalData:"قم برفع أو تحميل بيانات إيقاف البيع لعرض التقويم.",
+    calHint:"تلميح: مرّر الفأرة فوق يوم إيقاف البيع لمعرفة أنواع الغرف المتأثرة.",
+    allHotels:"جميع الفنادق",
+    allRoomTypes:"جميع أنواع الغرف",
+    roomWord:"غرفة",roomsWord:"غرف",
+    resultsTitle:"نتائج إيقاف البيع",
+    searchPh:"ابحث باسم الفندق...",
+    onlyAffected:"إظهار الفنادق التي يوجد بها إيقاف بيع فقط",
+    expandAll:"فتح جميع الفنادق",
+    roomType:"نوع الغرفة",stopPeriods:"فترات إيقاف البيع",status:"الحالة",
+    active:"فعّال الآن",upcoming:"قادم",
+    noStopSale:"لا يوجد إيقاف بيع",
+    noHotels:"لا توجد فنادق حتى الآن.",
+    noMatch:"لا توجد فنادق تطابق البحث / الفلاتر.",
+    asOf:"يتم عرض تواريخ إيقاف البيع من",
+    onward:"فما بعد — يتم إخفاء التواريخ الماضية تلقائياً في هذه القائمة (يمكنك تصفح أي شهر أعلى في التقويم).",
+    filesParsed:"ملف تم تحليله",
+    dow:["أحد","إثنين","ثلاثاء","أربعاء","خميس","جمعة","سبت"]
+  }
+};
+
+function setLang(lang){
+  currentLang=lang;localStorage.setItem("lang_stopsale",lang);
+  document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";document.body.dir=document.documentElement.dir;
+  enBtn.classList.toggle("active",lang==="en");arBtn.classList.toggle("active",lang==="ar");
+  document.querySelectorAll("[data-i18n]").forEach(el=>{if(t[lang][el.dataset.i18n]) el.innerHTML=t[lang][el.dataset.i18n]});
+  document.querySelectorAll("[data-i18n-ph]").forEach(el=>{if(t[lang][el.dataset.i18nPh]) el.placeholder=t[lang][el.dataset.i18nPh]});
+  updateAsOfNote();
+  populateCalendarSelectors();
+  renderCalendar();
+  render();
+}
+
+/* ============================================================
+   PARSING
+   ============================================================ */
+function isRedFill(cell){
+  if(!cell || !cell.s || !cell.s.fgColor) return false;
+  const rgb = (cell.s.fgColor.rgb || "").toUpperCase();
+  return rgb === "FF0000" || rgb === "FFFF0000";
+}
+const LEGEND_LABELS = ["open to sale","white","stop sale","red"];
+
+function canonicalRoomKey(room){
+  return normalize(room)
+    .replace(/\(subject to hotel availability\)/g,"")
+    .replace(/\(subject to availability\)/g,"")
+    .trim();
+}
+function isAllRoomsLabel(room){
+  const n = normalize(room);
+  return n.startsWith("all rm") || n.startsWith("all room");
+}
+
+function resetData(){
+  hotelData = {};
+}
+
+function addStopDay(hotel, roomRaw, dayNum){
+  hotel = hotel.trim();
+  const key = isAllRoomsLabel(roomRaw) ? "__ALL__" : canonicalRoomKey(roomRaw);
+  if(!hotelData[hotel]) hotelData[hotel] = {};
+  if(!hotelData[hotel][key]){
+    hotelData[hotel][key] = { display: isAllRoomsLabel(roomRaw) ? null : roomRaw.trim(), dayNumbers: new Set() };
+  }
+  // prefer the shortest / no-suffix display variant we've seen
+  if(!isAllRoomsLabel(roomRaw)){
+    const cur = hotelData[hotel][key].display;
+    if(!cur || roomRaw.trim().length < cur.length) hotelData[hotel][key].display = roomRaw.trim();
+  }
+  hotelData[hotel][key].dayNumbers.add(dayNum);
+}
+
+function parseWorkbook(wb, fileLabel, stats){
+  // Only read VISIBLE sheet tabs. Workbooks like this one keep one tab per
+  // month and hide old/archived months — if we parsed every hidden tab too,
+  // stop-sale marks from old archived months would leak into the current
+  // data and no longer match what a person sees when they open the file.
+  // (Falls back to reading everything if every single sheet is hidden,
+  // so the app never ends up with zero data.)
+  const sheetMeta = (wb.Workbook && wb.Workbook.Sheets) || [];
+  const visibleNames = wb.SheetNames.filter((name, idx) => !(sheetMeta[idx] && sheetMeta[idx].Hidden));
+  const namesToParse = visibleNames.length ? visibleNames : wb.SheetNames;
+  stats.parsedSheetNames = namesToParse;
+
+  namesToParse.forEach(sheetName=>{
+    const ws = wb.Sheets[sheetName];
+    const ref = ws['!ref'];
+    if(!ref) return;
+    const range = XLSX.utils.decode_range(ref);
+    let sheetHasDates = false;
+    let dayByCol = {};
+    let currentHotel = null;
+
+    for(let R=range.s.r; R<=range.e.r; R++){
+      const aCell = ws[XLSX.utils.encode_cell({r:R,c:0})];
+      const aVal = (aCell && aCell.v!=null) ? String(aCell.v).trim() : "";
+
+      let rowDayCols = {};
+      let dateCellCount = 0;
+      for(let C=1; C<=range.e.c; C++){
+        const cell = ws[XLSX.utils.encode_cell({r:R,c:C})];
+        if(cell && cell.t === 'n' && typeof cell.v === 'number' && cell.z && XLSX.SSF.is_date(cell.z)){
+          rowDayCols[C] = serialToDayNumber(cell.v);
+          dateCellCount++;
+        }
+      }
+      // require several date cells in a row before treating it as a header row
+      // (guards against a single stray date-formatted cell being misread)
+      const rowHasDate = dateCellCount >= 5;
+
+      if(rowHasDate){
+        dayByCol = rowDayCols;
+        sheetHasDates = true;
+        if(aVal){ currentHotel = aVal; }
+        continue;
+      }
+
+      if(!aVal){ continue; }
+      const lower = aVal.toLowerCase();
+      if(LEGEND_LABELS.includes(lower)) continue;
+      if(!currentHotel) continue;
+      if(!Object.keys(dayByCol).length) continue;
+
+      const roomName = aVal;
+      Object.keys(dayByCol).forEach(colStr=>{
+        const C = Number(colStr);
+        const cell = ws[XLSX.utils.encode_cell({r:R,c:C})];
+        if(isRedFill(cell)){
+          addStopDay(currentHotel, roomName, dayByCol[colStr]);
+        }
+      });
+    }
+    if(sheetHasDates) stats.sheets++;
+  });
+}
+
+/* ============================================================
+   RANGE BUILDING (for the list view — future dates only)
+   ============================================================ */
+function buildRanges(){
+  const out = {};
+  Object.keys(hotelData).forEach(hotel=>{
+    out[hotel] = {};
+    Object.keys(hotelData[hotel]).forEach(key=>{
+      const entry = hotelData[hotel][key];
+      const days = [...effectiveDayNumbers(hotel, key)].filter(d=>d >= today).sort((a,b)=>a-b);
+      const ranges = [];
+      let start=null,prev=null;
+      days.forEach(d=>{
+        if(start===null){ start=d; prev=d; return; }
+        if(d - prev === 1){ prev = d; }
+        else { ranges.push({start,end:prev}); start=d; prev=d; }
+      });
+      if(start!==null) ranges.push({start,end:prev});
+      if(ranges.length){
+        out[hotel][key] = {
+          display: key==="__ALL__" ? t[currentLang].allRoomTypes : entry.display,
+          ranges
+        };
+      }
+    });
+  });
+  return out;
+}
+
+/* ============================================================
+   DATA SOURCE: GitHub-hosted file, with manual preview override
+   ============================================================ */
+async function loadFromRepo(isManualRefresh){
+  if(isManualPreview && !isManualRefresh) return;
+  sourceDot.className = "dot warn";
+  sourceText.innerText = t[currentLang].checkingRepo;
+  mStatus.innerText = t[currentLang].loading;
+  try{
+    // Auto-discover whatever workbooks + logo/slogan images are sitting
+    // in data/ or anywhere in the repo.
+    let assets = await discoverRepoAssets();
+    assets = await fillMissingAssetsViaProbe(assets);
+    applyBrandAssets(assets);
+
+    let filesToFetch = (assets && assets.xlsxList && assets.xlsxList.length)
+      ? assets.xlsxList
+      : [{ url: DATA_URL_FALLBACK, name: "stop-sale.xlsx", path: DATA_URL_FALLBACK }];
+
+    resetData();
+    isManualPreview = false;
+    manualFileNames = [];
+    renderFileList();
+
+    const stats = { sheets: 0, filesLoaded: [] };
+    let loadedCount = 0;
+
+    for(const item of filesToFetch){
+      try {
+        const res = await fetch(item.url + (item.url.includes("?") ? "&" : "?") + "v=" + Date.now(), {cache:"no-store"});
+        if(!res.ok) continue;
+        const buffer = await res.arrayBuffer();
+        const wb = XLSX.read(buffer, {type:"array", cellStyles:true, cellNF:true});
+        parseWorkbook(wb, item.name, stats);
+        stats.filesLoaded.push(item.path);
+        loadedCount++;
+      } catch(e) {
+        console.warn("Failed to load workbook " + item.path, e);
+      }
+    }
+
+    if(loadedCount === 0){
+      sourceDot.className = "dot warn";
+      sourceText.innerText = t[currentLang].repoMissing;
+      mStatus.innerText = t[currentLang].noFile;
+      return;
+    }
+
+    sourceDot.className = "dot ok";
+    const loadedPaths = stats.filesLoaded.map(p => `<b>${escapeHTML(p)}</b>`).join(", ");
+    sourceText.innerHTML = `${t[currentLang].repoLoaded} ${loadedPaths}`;
+    mStatus.innerText = t[currentLang].ready;
+    finishLoad();
+  }catch(err){
+    console.error(err);
+    sourceDot.className = "dot err";
+    sourceText.innerText = t[currentLang].repoLoadFailed;
+    mStatus.innerText = t[currentLang].noFile;
+  }
+}
+
+function handleManualFiles(files){
+  if(!files || !files.length) return;
+  resetData();
+  isManualPreview = true;
+  manualFileNames = Array.from(files).map(f=>f.name);
+  renderFileList();
+  const stats = {sheets:0};
+  let pending = files.length;
+  Array.from(files).forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      try{
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, {type:"array", cellStyles:true, cellNF:true});
+        parseWorkbook(wb, file.name, stats);
+      }catch(err){
+        console.error("Failed to parse "+file.name, err);
+      }
+      pending--;
+      if(pending===0){
+        sourceDot.className = "dot warn";
+        sourceText.innerHTML = `${t[currentLang].previewing} ${manualFileNames.map(escapeHTML).join(", ")}`;
+        mStatus.innerText = t[currentLang].ready;
+        finishLoad();
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function clearManualFiles(){
+  fileInput.value = "";
+  isManualPreview = false;
+  manualFileNames = [];
+  renderFileList();
+  loadFromRepo(true);
+}
+
+function renderFileList(){
+  fileList.innerHTML = manualFileNames.map(n=>`<span class="file-chip">${escapeHTML(n)}</span>`).join("");
+  clearBtn.style.display = manualFileNames.length ? "inline-block" : "none";
+}
+
+function finishLoad(){
+  updateAsOfNote();
+  populateCalendarSelectors();
+  renderCalendar();
+  render();
+}
+
+function updateAsOfNote(){
+  today = todayDayNumber();
+  const parts = [`${t[currentLang].asOf} <b>${fmtDayNumber(today)}</b> ${t[currentLang].onward}`];
+  asofNote.innerHTML = parts.join(" ");
+}
+
+/* ============================================================
+   CALENDAR VIEW
+   ============================================================ */
+let calYear = null, calMonth = null; // month is 0-based
+const ALL_HOTELS = "__ALL_HOTELS__";
+
+function populateCalendarSelectors(){
+  const hotels = Object.keys(hotelData).sort((a,b)=>a.localeCompare(b));
+  const prevHotel = calHotelSelect.value;
+  const hotelOpts = [`<option value="${ALL_HOTELS}">${escapeHTML(t[currentLang].allHotels || "All Hotels")}</option>`]
+    .concat(hotels.map(h=>`<option value="${escapeHTML(h)}">${escapeHTML(h)}</option>`));
+  calHotelSelect.innerHTML = hotelOpts.join("");
+  const validHotelValues = [ALL_HOTELS, ...hotels];
+  // Default to "All Hotels" unless a specific valid hotel was previously selected by the user
+  calHotelSelect.value = (prevHotel && validHotelValues.includes(prevHotel)) ? prevHotel : ALL_HOTELS;
+  populateRoomSelector();
+  if(calYear===null){
+    const now = new Date();
+    calYear = now.getFullYear();
+    calMonth = now.getMonth();
+  }
+}
+
+function populateRoomSelector(){
+  const hotel = calHotelSelect.value;
+  const isAllHotels = hotel === ALL_HOTELS;
+  calRoomSelect.disabled = false;
+  if(isAllHotels){
+    calRoomSelect.innerHTML = `<option value="__ALL__">${escapeHTML(t[currentLang].allRoomTypes || "All Room Types")}</option>`;
+    calRoomSelect.value = "__ALL__";
+    return;
+  }
+  const roomsRaw = hotel && hotelData[hotel] ? Object.keys(hotelData[hotel]).filter(k=>k!=="__ALL__") : [];
+  const opts = [`<option value="__ALL__">${escapeHTML(t[currentLang].allRoomTypes || "All Room Types")}</option>`]
+    .concat(roomsRaw.map(key=>`<option value="${escapeHTML(key)}">${escapeHTML(hotelData[hotel][key].display || key)}</option>`));
+  calRoomSelect.innerHTML = opts.join("");
+  calRoomSelect.value = "__ALL__";
+}
+
+function onCalHotelChange(){
+  populateRoomSelector();
+  renderCalendar();
+}
+
+function shiftCalMonth(delta){
+  if(calYear===null) return;
+  calMonth += delta;
+  if(calMonth < 0){ calMonth = 11; calYear--; }
+  if(calMonth > 11){ calMonth = 0; calYear++; }
+  renderCalendar();
+}
+function goToTodayMonth(){
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  renderCalendar();
+}
+
+// For the "All Hotels" view: map of dayNumber -> list of hotel names that
+// have at least one room stopped on that day (union across every hotel).
+function computeAllHotelsDayMap(){
+  const map = {};
+  Object.keys(hotelData).forEach(hotel=>{
+    hotelUnionDayNumbers(hotel).forEach(d=>{
+      (map[d] || (map[d]=[])).push(hotel);
+    });
+  });
+  return map;
+}
+
+function buildTagsHtml(labels){
+  const MAX_SHOWN = 3;
+  const shown = labels.slice(0, MAX_SHOWN);
+  const extra = labels.length - shown.length;
+  let html = shown.map(l=>`<span class="cal-tag">${escapeHTML(l)}</span>`).join("");
+  if(extra>0) html += `<span class="cal-tag more">+${extra}</span>`;
+  return html;
+}
+
+function renderCalendar(){
+  const monthsEn = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const monthsAr = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+  calDow.innerHTML = t[currentLang].dow.map(d=>`<div class="cal-dow">${d}</div>`).join("");
+
+  const hotel = calHotelSelect.value;
+  const roomKey = calRoomSelect.value;
+  const isAllHotelsView = hotel === ALL_HOTELS;
+  const isAllRoomsView = roomKey === "__ALL__";
+
+  const hasData = Object.keys(hotelData).length > 0;
+  const hotelValid = isAllHotelsView || (hotel && hotelData[hotel]);
+  if(calYear===null || !hasData || !hotelValid){
+    calMonthLabel.innerText = "—";
+    calGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="big">📆</div><div>${t[currentLang].noCalData}</div></div>`;
+    return;
+  }
+
+  calMonthLabel.innerText = `${currentLang==="ar"?monthsAr[calMonth]:monthsEn[calMonth]} ${calYear}`;
+
+  // "All Room Types" means ANY room is stopped that day (union across every
+  // room, folding in All-Room-Types marks too) — not just the literal
+  // "All RM Types" row, which may be blank even when individual rooms aren't.
+  let dayNumbers, allHotelsMap = null;
+  if(isAllHotelsView){
+    allHotelsMap = computeAllHotelsDayMap();
+    dayNumbers = new Set(Object.keys(allHotelsMap).map(Number));
+  } else {
+    dayNumbers = isAllRoomsView ? hotelUnionDayNumbers(hotel) : effectiveDayNumbers(hotel, roomKey);
+  }
+
+  const firstOfMonthUTC = Date.UTC(calYear, calMonth, 1);
+  const firstDayNum = Math.round(firstOfMonthUTC / MS_PER_DAY);
+  const firstWeekday = new Date(firstOfMonthUTC).getUTCDay(); // 0=Sun
+  const daysInMonth = new Date(Date.UTC(calYear, calMonth+1, 0)).getUTCDate();
+
+  let cells = [];
+  for(let i=0;i<firstWeekday;i++) cells.push(`<div class="cal-day empty"></div>`);
+  for(let day=1; day<=daysInMonth; day++){
+    const dNum = firstDayNum + (day-1);
+    const isStop = dayNumbers.has(dNum);
+    const isPast = dNum < today;
+    const isToday = dNum === today;
+    const cls = ["cal-day", isStop?"stop":"open", isPast?"past":"", isToday?"today":""].filter(Boolean).join(" ");
+
+    let tagsHtml = "";
+    let titleAttr = "";
+    if(isStop){
+      if(isAllHotelsView){
+        const hotelsHere = (allHotelsMap[dNum] || []).sort((a,b)=>a.localeCompare(b));
+        tagsHtml = `<div class="cal-tags">${buildTagsHtml(hotelsHere.map(abbreviateHotelName))}</div>`;
+        titleAttr = escapeHTML(hotelsHere.join(", "));
+      } else if(isAllRoomsView){
+        const names = hotelRoomsStoppedOnDay(hotel, dNum);
+        tagsHtml = `<div class="cal-tags">${buildTagsHtml(names.map(abbreviateRoomName))}</div>`;
+        titleAttr = escapeHTML(names.join(", "));
+      } else {
+        tagsHtml = `<div class="cal-tags"><span class="cal-tag">${t[currentLang].legendStop}</span></div>`;
+      }
+    }
+    cells.push(`<div class="${cls}" ${titleAttr?`title="${titleAttr}"`:""}><span class="dnum">${day}</span>${tagsHtml}</div>`);
+  }
+  calGrid.innerHTML = cells.join("");
+}
+
+/* ============================================================
+   LIST VIEW
+   ============================================================ */
+let expandedState = {};
+
+function toggleExpandAll(){
+  const all = expandAll.checked;
+  document.querySelectorAll(".hotel-body").forEach(el=>{
+    el.classList.toggle("collapsed", !all);
+    const k = el.id.replace(/^body-/,"");
+    expandedState[k] = all;
+    const head = document.getElementById("head-" + k);
+    if(head) head.setAttribute("aria-expanded", all ? "true" : "false");
+  });
+  document.querySelectorAll(".chev").forEach(el=> el.classList.toggle("open", all));
+}
+function toggleHotel(key){
+  const body = document.getElementById("body-"+key);
+  const chev = document.getElementById("chev-"+key);
+  const head = document.getElementById("head-"+key);
+  const willOpen = body.classList.contains("collapsed");
+  body.classList.toggle("collapsed", !willOpen);
+  chev.classList.toggle("open", willOpen);
+  if(head) head.setAttribute("aria-expanded", willOpen ? "true" : "false");
+  expandedState[key] = willOpen;
+}
+
+/* ============================================================
+   EFFECTIVE STOP-SALE DAYS
+   A hotel's sheet can mark a stop-sale two ways: (1) an individual
+   room row, or (2) the "All RM Types / All Room Types" row, which
+   means EVERY room is stopped that day even if that specific room's
+   own row wasn't separately colored. So a room's true stop days are
+   its own marks UNION the hotel's "All Room Types" marks — otherwise
+   a day marked only at the "all rooms" level would look open when
+   checking one specific room, which doesn't match the real sheet.
+   ============================================================ */
+function effectiveDayNumbers(hotel, roomKey){
+  const rooms = hotelData[hotel];
+  if(!rooms) return new Set();
+  const own = rooms[roomKey] ? rooms[roomKey].dayNumbers : new Set();
+  if(roomKey === "__ALL__") return own;
+  const allRooms = rooms["__ALL__"] ? rooms["__ALL__"].dayNumbers : null;
+  if(!allRooms || !allRooms.size) return own;
+  const merged = new Set(own);
+  allRooms.forEach(d=>merged.add(d));
+  return merged;
+}
+function hotelUnionDayNumbers(hotel){
+  const rooms = hotelData[hotel];
+  const merged = new Set();
+  if(!rooms) return merged;
+  Object.keys(rooms).forEach(key=> effectiveDayNumbers(hotel, key).forEach(d=>merged.add(d)));
+  return merged;
+}
+function hotelRoomsStoppedOnDay(hotel, dayNum){
+  const rooms = hotelData[hotel];
+  const names = [];
+  if(!rooms) return names;
+  Object.keys(rooms).forEach(key=>{
+    if(key === "__ALL__") return;
+    if(effectiveDayNumbers(hotel, key).has(dayNum)) names.push(rooms[key].display || key);
+  });
+  return names;
+}
+
+function normalize(s){ return String(s||"").toLowerCase().trim().replace(/\s+/g," "); }
+
+/* ============================================================
+   SHORTHAND ABBREVIATIONS (for compact calendar chips)
+   Best-effort auto-generated shorthand, e.g. "Double City View" -> "DBL CV".
+   Not a curated dictionary of every possible room name — the full name
+   always remains available in the hover tooltip.
+   ============================================================ */
+const ROOM_ABBR_DICT = {
+  double:"DBL", single:"SGL", twin:"TWN", triple:"TRP", quad:"QUAD", family:"FAM",
+  standard:"STD", superior:"SUP", deluxe:"DLX", executive:"EXEC", junior:"JR",
+  royal:"ROY", premier:"PRM", premium:"PRM", grand:"GRD", club:"CLB",
+  presidential:"PRES", all:"ALL"
+};
+function abbreviateRoomName(name){
+  if(!name) return "";
+  const clean = String(name)
+    .replace(/\(subject to hotel availability\)/gi,"")
+    .replace(/\(subject to availability\)/gi,"")
+    .replace(/[()]/g," ")
+    .replace(/\s+/g," ")
+    .trim();
+  const words = clean.split(" ").filter(Boolean);
+  if(!words.length) return "";
+  const first = words[0].toLowerCase();
+  const firstAbbr = ROOM_ABBR_DICT[first] || words[0].replace(/[^A-Za-z0-9]/g,"").slice(0,3).toUpperCase();
+  const rest = words.slice(1).map(w=>w.replace(/[^A-Za-z]/g,"")).filter(Boolean);
+  if(!rest.length) return firstAbbr;
+  const restAbbr = rest.map(w=>w[0].toUpperCase()).join("");
+  return restAbbr ? `${firstAbbr} ${restAbbr}` : firstAbbr;
+}
+function abbreviateHotelName(name){
+  if(!name) return "";
+  const words = String(name).replace(/[^A-Za-z0-9\s]/g," ").split(/\s+/).filter(Boolean);
+  if(!words.length) return "";
+  if(words.length===1) return words[0].slice(0,4).toUpperCase();
+  return words.map(w=>w[0].toUpperCase()).join("").slice(0,5);
+}
+function escapeHTML(v){return String(v||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function hashCode(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h<<5)-h+s.charCodeAt(i); h|=0; } return h; }
+
+function render(){
+  const ranges = buildRanges();
+  const hotelNames = Object.keys(ranges).sort((a,b)=>a.localeCompare(b));
+  const query = normalize(hotelSearch.value);
+  const onlyAffectedFlag = onlyAffected.checked;
+
+  let activeCount = 0, upcomingCount = 0;
+  const cardsHtml = [];
+
+  hotelNames.forEach(hotel=>{
+    const rooms = ranges[hotel];
+    const roomKeys = Object.keys(rooms);
+    const hasAnyStop = roomKeys.length > 0;
+
+    if(query && !normalize(hotel).includes(query)) return;
+    if(onlyAffectedFlag && !hasAnyStop) return;
+
+    let hotelActive=false, hotelUpcoming=false;
+    const rows = roomKeys.map(key=>{
+      const room = rooms[key];
+      const chips = room.ranges.map(r=>{
+        const isActive = r.start <= today;
+        if(isActive){ hotelActive=true; activeCount++; } else { hotelUpcoming=true; upcomingCount++; }
+        const label = (r.start===r.end) ? fmtDayNumber(r.start) : `${fmtDayNumber(r.start)} → ${fmtDayNumber(r.end)}`;
+        return `<span class="range-chip ${isActive?'':'upcoming'}">${label}</span>`;
+      }).join(" ");
+      const anyActive = room.ranges.some(r=>r.start<=today);
+      const pill = anyActive
+        ? `<span class="status-pill active">${t[currentLang].active}</span>`
+        : `<span class="status-pill upcoming">${t[currentLang].upcoming}</span>`;
+      return `<tr><td>${escapeHTML(room.display)}</td><td>${chips}</td><td>${pill}</td></tr>`;
+    }).join("");
+
+    const key = hotel.replace(/[^a-zA-Z0-9]/g,"_")+"_"+Math.abs(hashCode(hotel));
+    const badge = hasAnyStop
+      ? (hotelActive ? `<span class="badge active">${t[currentLang].active}</span>` : `<span class="badge upcoming">${t[currentLang].upcoming}</span>`)
+      : `<span class="badge clear">${t[currentLang].noStopSale}</span>`;
+    const countBadge = hasAnyStop ? `<span class="badge count">${roomKeys.length}</span>` : "";
+
+    const tableOrEmpty = hasAnyStop
+      ? `<div class="table-wrap"><table>
+          <tr><th>${t[currentLang].roomType}</th><th>${t[currentLang].stopPeriods}</th><th>${t[currentLang].status}</th></tr>
+          ${rows}
+        </table></div>`
+      : `<div class="note" style="padding:14px 16px">${t[currentLang].noStopSale}</div>`;
+
+    // Hotels default to expanded (matching the "Expand all hotels" checkbox,
+    // which is checked by default) unless the person has explicitly
+    // collapsed/expanded this specific hotel already.
+    const wasExpanded = (key in expandedState) ? expandedState[key] : expandAll.checked;
+    cardsHtml.push(`
+      <div class="hotel-card">
+        <div class="hotel-head" id="head-${key}" role="button" tabindex="0" aria-expanded="${wasExpanded}" onclick="toggleHotel('${key}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleHotel('${key}');}">
+          <div class="hotel-name">${escapeHTML(hotel)}</div>
+          <div class="hotel-badges">${countBadge}${badge}<span class="chev ${wasExpanded?'open':''}" id="chev-${key}">▶</span></div>
+        </div>
+        <div class="hotel-body ${wasExpanded?'':'collapsed'}" id="body-${key}">${tableOrEmpty}</div>
+      </div>
+    `);
+  });
+
+  mHotels.innerText = hotelNames.length;
+  mActive.innerText = activeCount;
+  mUpcoming.innerText = upcomingCount;
+
+  if(!hotelNames.length){
+    resultsWrap.innerHTML = `<div class="empty-state"><div class="big">📅</div><div>${t[currentLang].noHotels}</div></div>`;
+  } else if(!cardsHtml.length){
+    resultsWrap.innerHTML = `<div class="empty-state"><div class="big">🔍</div><div>${t[currentLang].noMatch}</div></div>`;
+  } else {
+    resultsWrap.innerHTML = cardsHtml.join("");
+  }
+}
+
+/* ============================================================
+   DRAG & DROP
+   ============================================================ */
+const dropZone = document.getElementById("dropZone");
+["dragenter","dragover"].forEach(evt=>dropZone.addEventListener(evt,e=>{e.preventDefault();e.stopPropagation();dropZone.classList.add("dragover");}));
+["dragleave","drop"].forEach(evt=>dropZone.addEventListener(evt,e=>{e.preventDefault();e.stopPropagation();dropZone.classList.remove("dragover");}));
+dropZone.addEventListener("drop", e=>{
+  const files = e.dataTransfer.files;
+  if(files && files.length) handleManualFiles(files);
+});
+
+mStatus.innerText = t[currentLang].noFile;
+setLang(currentLang);
+updateAsOfNote();
+loadFromRepo(false);
+</script>
+</body>
+</html>
