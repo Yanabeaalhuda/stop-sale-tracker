@@ -120,16 +120,55 @@
   .cal-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-size:12.5px;color:var(--muted);align-items:center}
   .cal-legend .swatch{width:13px;height:13px;border-radius:4px;display:inline-block;margin-right:6px;vertical-align:middle}
   .cal-hint{font-size:12px;color:var(--muted);margin-top:10px;font-style:italic}
+  /* Modal Styles */
+  .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(20,5,10,.65);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .2s ease}
+  .modal-card{background:#fff;border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.35);width:100%;max-width:580px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border);animation:slideUp .25s ease}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .modal-head{background:linear-gradient(90deg,var(--burgundy-dark),var(--burgundy));color:#fff;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--gold)}
+  .modal-date{font-size:20px;font-weight:bold;color:#ffe7ad}
+  .modal-sub{font-size:12px;color:var(--gold-light);margin-top:2px}
+  .modal-close{background:rgba(255,255,255,.15);border:0;color:#fff;font-size:18px;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .modal-close:hover{background:var(--red)}
+  .modal-body{padding:20px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .modal-sec{margin-bottom:14px;padding:14px 16px;border-radius:14px;background:#fdf7ec;border:1px solid var(--border)}
+  .modal-sec-title{font-weight:bold;color:var(--burgundy);font-size:15px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .modal-room-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .modal-room-chip{background:#fdeceb;color:var(--red);border:1px solid rgba(176,0,32,.25);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:bold}
+  .modal-open-card{background:#eafaf0;border:1px solid rgba(8,122,54,.3);color:var(--green);padding:24px;border-radius:16px;text-align:center;font-weight:bold;font-size:16px}
+
+  /* Responsive Design Across PC, Tablet, & Mobile */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:18px}
+  .cal-day:not(.empty){cursor:pointer}
+  
   @media(max-width:1024px){
-    .hero{padding:18px}.brand img{width:96px;height:96px}.brand h1{font-size:23px}.brand p.tag,.slogan{font-size:14px}
+    .hero{padding:20px 16px}.brand img{width:90px;height:90px}.brand h1{font-size:24px}.brand p.tag,.slogan{font-size:15px}
     main{padding:16px}.grid{grid-template-columns:repeat(2,1fr)}th,td{font-size:12px;padding:8px}
+    .cal-day{min-height:70px;padding:6px}
   }
-  @media(max-width:760px){
-    .grid{grid-template-columns:1fr 1fr}.brand{flex-direction:column;gap:10px}
-    .brand img{width:80px;height:80px}.brand h1{font-size:19px}.slogan{padding:12px;margin-top:12px}
-    main{padding:10px}.card{padding:13px;border-radius:14px}.metric .value{font-size:20px}
-    table{min-width:560px}.cal-day{min-height:56px;padding:5px}.cal-day .dnum{font-size:11px;width:18px;height:18px}
-    .cal-day .cal-tag{font-size:9px;padding:2px 5px}.cal-nav{margin-left:0;width:100%;justify-content:center}
+  @media(max-width:768px){
+    main{padding:12px}.card{padding:14px;border-radius:16px}
+    .grid{grid-template-columns:1fr 1fr;gap:10px}
+    .metric .value{font-size:22px}
+    .cal-controls{flex-direction:column;align-items:stretch;gap:10px}
+    .cal-field{min-width:100%}
+    .cal-nav{margin-left:0;width:100%;justify-content:space-between}
+    .cal-month-label{min-width:auto}
+    .cal-dow{font-size:10px;padding:8px 0}
+    .cal-day{min-height:56px;padding:4px}
+    .cal-day .dnum{font-size:11px;width:18px;height:18px}
+    .cal-day .cal-tags{gap:2px}
+    .cal-day .cal-tag{font-size:8.5px;padding:2px 4px;border-radius:4px}
+    .modal-card{max-width:95vw;border-radius:16px}
+    .searchbar input, select, button{font-size:14px;padding:10px 12px;min-height:44px}
+    table{min-width:500px}
+  }
+  @media(max-width:480px){
+    .grid{grid-template-columns:1fr;gap:10px}
+    .brand img{width:72px;height:72px}.brand h1{font-size:19px}.slogan{font-size:13px;padding:10px}
+    .cal-day{min-height:48px;padding:3px}
+    .cal-day .cal-tag{font-size:8px;padding:1px 3px}
+    .cal-legend{gap:10px;font-size:11px}
   }
 </style>
 </head>
@@ -230,6 +269,20 @@
 
   <div class="footer">COPYRIGHTS YANABEA ALHUDA 2026</div>
 </main>
+
+<!-- DATE DETAILS MODAL OVERLAY -->
+<div class="modal-overlay" id="dateModal" style="display:none" onclick="if(event.target===this) closeDateModal()" role="dialog" aria-modal="true" aria-labelledby="modalDateTitle">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <div class="modal-date" id="modalDateTitle">—</div>
+        <div class="modal-sub" id="modalDateSub">Date Details</div>
+      </div>
+      <button type="button" class="modal-close" onclick="closeDateModal()" aria-label="Close modal">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
 
 <script>
 /* ============================================================
@@ -971,10 +1024,95 @@ function renderCalendar(){
         tagsHtml = `<div class="cal-tags"><span class="cal-tag">${t[currentLang].legendStop}</span></div>`;
       }
     }
-    cells.push(`<div class="${cls}" ${titleAttr?`title="${titleAttr}"`:""}><span class="dnum">${day}</span>${tagsHtml}</div>`);
+    cells.push(`<div class="${cls}" tabindex="0" role="button" aria-label="${day} ${calMonthLabel.innerText}" onclick="openDateModal(${dNum})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDateModal(${dNum});}" ${titleAttr?`title="${titleAttr}"`:""}><span class="dnum">${day}</span>${tagsHtml}</div>`);
   }
   calGrid.innerHTML = cells.join("");
 }
+
+/* ============================================================
+   DATE POP-OUT DETAILS MODAL
+   ============================================================ */
+function openDateModal(dNum){
+  const formattedDate = fmtDayNumber(dNum);
+  const d = dayNumberToDate(dNum);
+  const daysEn = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const daysAr = ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+  const dowStr = currentLang === "ar" ? daysAr[d.getUTCDay()] : daysEn[d.getUTCDay()];
+  
+  modalDateTitle.innerText = `${dowStr}, ${formattedDate}`;
+  modalDateSub.innerText = currentLang === "ar" ? "تفاصيل حالة الفنادق والغرف" : "Hotel & Room Availability Status";
+
+  const selectedHotel = calHotelSelect.value;
+  const isAllHotels = selectedHotel === ALL_HOTELS;
+
+  let html = "";
+
+  if(isAllHotels){
+    const hotelKeys = Object.keys(hotelData).sort((a,b)=>a.localeCompare(b));
+    let stoppedCount = 0;
+    
+    hotelKeys.forEach(hotel => {
+      const rooms = hotelRoomsStoppedOnDay(hotel, dNum);
+      const isUnionStop = hotelUnionDayNumbers(hotel).has(dNum);
+      
+      if(isUnionStop || rooms.length){
+        stoppedCount++;
+        const displayRooms = rooms.length ? rooms : [t[currentLang].allRoomTypes];
+        html += `
+          <div class="modal-sec">
+            <div class="modal-sec-title">
+              <span>🏢 ${escapeHTML(hotel)}</span>
+              <span class="status-pill active">${t[currentLang].active}</span>
+            </div>
+            <div class="modal-room-list">
+              ${displayRooms.map(r => `<span class="modal-room-chip">${escapeHTML(r)}</span>`).join("")}
+            </div>
+          </div>
+        `;
+      }
+    });
+
+    if(stoppedCount === 0){
+      html = `<div class="modal-open-card">✅ ${currentLang==='ar'?'جميع الفنادق متاحة للبيع في هذا اليوم':'All hotels are open to sale on this date.'}</div>`;
+    }
+  } else {
+    const hotel = selectedHotel;
+    const rooms = hotelRoomsStoppedOnDay(hotel, dNum);
+    const isUnionStop = hotelUnionDayNumbers(hotel).has(dNum);
+
+    if(isUnionStop || rooms.length){
+      const displayRooms = rooms.length ? rooms : [t[currentLang].allRoomTypes];
+      html = `
+        <div class="modal-sec">
+          <div class="modal-sec-title">
+            <span>🏢 ${escapeHTML(hotel)}</span>
+            <span class="status-pill active">${t[currentLang].active}</span>
+          </div>
+          <div class="modal-room-list">
+            ${displayRooms.map(r => `<span class="modal-room-chip">${escapeHTML(r)}</span>`).join("")}
+          </div>
+        </div>
+      `;
+    } else {
+      html = `<div class="modal-open-card">✅ ${escapeHTML(hotel)} ${currentLang==='ar'?'متاح للبيع في هذا اليوم':'is open to sale on this date.'}</div>`;
+    }
+  }
+
+  modalBody.innerHTML = html;
+  dateModal.style.display = "flex";
+  document.body.style.overflow = "hidden";
+}
+
+function closeDateModal(){
+  dateModal.style.display = "none";
+  document.body.style.overflow = "";
+}
+
+window.addEventListener("keydown", e => {
+  if(e.key === "Escape" && dateModal.style.display === "flex") {
+    closeDateModal();
+  }
+});
 
 /* ============================================================
    LIST VIEW
