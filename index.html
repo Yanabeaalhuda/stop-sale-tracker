@@ -200,7 +200,6 @@
     <div class="card metric"><div class="label" data-i18n="totalHotels">Hotels Loaded</div><div class="value" id="mHotels">0</div></div>
     <div class="card metric alert"><div class="label" data-i18n="activeStops">Active Stop Sales</div><div class="value" id="mActive">0</div></div>
     <div class="card metric"><div class="label" data-i18n="upcomingStops">Upcoming Stop Sales</div><div class="value" id="mUpcoming">0</div></div>
-    <div class="card metric" style="border-left: 4px solid #0f766e;"><div class="label" data-i18n="waitingStops">Waiting List Stops</div><div class="value" id="mWaiting" style="color: #0f766e;">0</div></div>
     <div class="card metric"><div class="label" data-i18n="dataStatus">Data Status</div><div class="value" id="mStatus">—</div></div>
   </section>
 
@@ -706,6 +705,7 @@ const t = {
 
 function setLang(lang){
   currentLang=lang;localStorage.setItem("lang_stopsale",lang);
+  document.title = t[lang].title || "Stop Sale Tracker";
   document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";document.body.dir=document.documentElement.dir;
   enBtn.classList.toggle("active",lang==="en");arBtn.classList.toggle("active",lang==="ar");
   document.querySelectorAll("[data-i18n]").forEach(el=>{if(t[lang][el.dataset.i18n]) el.innerHTML=t[lang][el.dataset.i18n]});
@@ -1365,13 +1365,6 @@ function getRangeStatus(r) {
   if (r.start <= today) {
     return 'active';
   }
-  const startDate = dayNumberToDate(r.start);
-  const todayDate = dayNumberToDate(today);
-  const isFutureMonth = (startDate.getUTCFullYear() > todayDate.getUTCFullYear()) ||
-                        (startDate.getUTCFullYear() === todayDate.getUTCFullYear() && startDate.getUTCMonth() > todayDate.getUTCMonth());
-  if (isFutureMonth) {
-    return 'waiting';
-  }
   return 'upcoming';
 }
 
@@ -1379,16 +1372,13 @@ function getOverallStatus(ranges) {
   if (!ranges || !ranges.length) return 'clear';
   let hasActive = false;
   let hasUpcoming = false;
-  let hasWaiting = false;
   ranges.forEach(r => {
     const status = getRangeStatus(r);
     if (status === 'active') hasActive = true;
     else if (status === 'upcoming') hasUpcoming = true;
-    else if (status === 'waiting') hasWaiting = true;
   });
   if (hasActive) return 'active';
   if (hasUpcoming) return 'upcoming';
-  if (hasWaiting) return 'waiting';
   return 'clear';
 }
 
@@ -1398,7 +1388,7 @@ function render(){
   const query = normalize(hotelSearch.value);
   const onlyAffectedFlag = onlyAffected.checked;
 
-  let activeCount = 0, upcomingCount = 0, waitingCount = 0;
+  let activeCount = 0, upcomingCount = 0;
   const cardsHtml = [];
 
   hotelNames.forEach(hotel=>{
@@ -1409,14 +1399,13 @@ function render(){
     if(query && !normalize(hotel).includes(query)) return;
     if(onlyAffectedFlag && !hasAnyStop) return;
 
-    let hotelStatus = 'clear'; // 'active', 'upcoming', 'waiting', 'clear'
+    let hotelStatus = 'clear'; // 'active', 'upcoming', 'clear'
     const rows = roomKeys.map(key=>{
       const room = rooms[key];
       const chips = room.ranges.map(r=>{
         const status = getRangeStatus(r);
         if(status === 'active') { activeCount++; }
         else if(status === 'upcoming') { upcomingCount++; }
-        else if(status === 'waiting') { waitingCount++; }
         const label = (r.start===r.end) ? fmtDayNumber(r.start) : `${fmtDayNumber(r.start)} → ${fmtDayNumber(r.end)}`;
         return `<span class="range-chip ${status}">${label}</span>`;
       }).join(" ");
@@ -1424,10 +1413,9 @@ function render(){
       const overallRoomStatus = getOverallStatus(room.ranges);
       if(overallRoomStatus === 'active') hotelStatus = 'active';
       else if(overallRoomStatus === 'upcoming' && hotelStatus !== 'active') hotelStatus = 'upcoming';
-      else if(overallRoomStatus === 'waiting' && hotelStatus !== 'active' && hotelStatus !== 'upcoming') hotelStatus = 'waiting';
 
       const pill = `<span class="status-pill ${overallRoomStatus}">
-        ${overallRoomStatus === 'active' ? t[currentLang].active : (overallRoomStatus === 'upcoming' ? t[currentLang].upcoming : t[currentLang].waitingList)}
+        ${overallRoomStatus === 'active' ? t[currentLang].active : t[currentLang].upcoming}
       </span>`;
       return `<tr><td>${escapeHTML(room.display)}</td><td>${chips}</td><td>${pill}</td></tr>`;
     }).join("");
@@ -1437,7 +1425,6 @@ function render(){
     if(hasAnyStop){
       if(hotelStatus === 'active') badge = `<span class="badge active">${t[currentLang].active}</span>`;
       else if(hotelStatus === 'upcoming') badge = `<span class="badge upcoming">${t[currentLang].upcoming}</span>`;
-      else if(hotelStatus === 'waiting') badge = `<span class="badge waiting">${t[currentLang].waitingList}</span>`;
     }
     const countBadge = hasAnyStop ? `<span class="badge count">${roomKeys.length}</span>` : "";
 
@@ -1466,7 +1453,6 @@ function render(){
   mHotels.innerText = hotelNames.length;
   mActive.innerText = activeCount;
   mUpcoming.innerText = upcomingCount;
-  mWaiting.innerText = waitingCount;
 
   if(!hotelNames.length){
     resultsWrap.innerHTML = `<div class="empty-state"><div class="big">📅</div><div>${t[currentLang].noHotels}</div></div>`;
@@ -1524,7 +1510,6 @@ function exportReport(format) {
   const totalHotelsCount = document.getElementById("mHotels").innerText;
   const activeCount = document.getElementById("mActive").innerText;
   const upcomingCount = document.getElementById("mUpcoming").innerText;
-  const waitingCount = document.getElementById("mWaiting").innerText;
 
   const query = normalize(document.getElementById("hotelSearch").value);
   const onlyAffectedFlag = document.getElementById("onlyAffected").checked;
@@ -1558,9 +1543,7 @@ function exportReport(format) {
         });
         
         const overallRoomStatus = getOverallStatus(room.ranges);
-        const statusText = overallRoomStatus === 'active' 
-          ? t[currentLang].active 
-          : (overallRoomStatus === 'upcoming' ? t[currentLang].upcoming : t[currentLang].waitingList);
+        const statusText = overallRoomStatus === 'active' ? t[currentLang].active : t[currentLang].upcoming;
 
         filteredData.push({
           hotel: hotel,
@@ -1576,26 +1559,25 @@ function exportReport(format) {
   const timestamp = getFormattedDateTime();
 
   if (format === 'excel') {
-    exportExcelReport(filteredData, totalHotelsCount, activeCount, upcomingCount, waitingCount, timestamp);
+    exportExcelReport(filteredData, totalHotelsCount, activeCount, upcomingCount, timestamp);
   } else if (format === 'png') {
-    exportPNGReport(filteredData, totalHotelsCount, activeCount, upcomingCount, waitingCount, timestamp);
+    exportPNGReport(filteredData, totalHotelsCount, activeCount, upcomingCount, timestamp);
   }
 }
 
-function exportExcelReport(data, totalHotels, activeCount, upcomingCount, waitingCount, timestamp) {
+function exportExcelReport(data, totalHotels, activeCount, upcomingCount, timestamp) {
   const isAr = currentLang === 'ar';
   
   const title = isAr ? "ينابيع الهدى - تقرير تواريخ إيقاف البيع" : "Yanabea Alhuda - Stop Sale Tracker Report";
   
   const summaryHeaders = isAr 
-    ? ["إجمالي الفنادق", "إيقاف فعال الآن", "إيقاف بيع قادم", "قائمة الانتظار"]
-    : ["Total Hotels Loaded", "Active Stop Sales", "Upcoming Stop Sales", "Waiting List Stops"];
+    ? ["إجمالي الفنادق", "إيقاف فعال الآن", "إيقاف بيع قادم"]
+    : ["Total Hotels Loaded", "Active Stop Sales", "Upcoming Stop Sales"];
     
   const summaryValues = [
     parseInt(totalHotels),
     parseInt(activeCount),
-    parseInt(upcomingCount),
-    parseInt(waitingCount)
+    parseInt(upcomingCount)
   ];
   
   const dataHeaders = isAr 
@@ -1645,7 +1627,7 @@ function exportExcelReport(data, totalHotels, activeCount, upcomingCount, waitin
   XLSX.writeFile(wb, fileName);
 }
 
-function exportPNGReport(data, totalHotels, activeCount, upcomingCount, waitingCount, timestamp) {
+function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestamp) {
   const isAr = currentLang === 'ar';
   const logo = document.getElementById("brandLogo");
   const logoSrc = (logo && logo.style.display !== 'none') ? getBase64Image(logo) : '';
@@ -1687,7 +1669,7 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, waitingC
   `;
 
   let metricsHtml = `
-    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 35px;">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 35px;">
       <div style="background: #ffffff; border: 1px solid #eadfce; border-left: 5px solid #6f1028; border-right: ${isAr ? '5px solid #6f1028' : 'none'}; border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
         <div style="font-size: 12px; color: #6f6f6f; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.2px;">
           ${isAr ? "إجمالي الفنادق" : "Total Hotels Loaded"}
@@ -1712,14 +1694,6 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, waitingC
           ${upcomingCount}
         </div>
       </div>
-      <div style="background: #ffffff; border: 1px solid #eadfce; border-left: 5px solid #0f766e; border-right: ${isAr ? '5px solid #0f766e' : 'none'}; border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
-        <div style="font-size: 12px; color: #6f6f6f; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.2px;">
-          ${isAr ? "قائمة الانتظار" : "Waiting List Stops"}
-        </div>
-        <div style="font-size: 26px; font-weight: bold; color: #0f766e;">
-          ${waitingCount}
-        </div>
-      </div>
     </div>
   `;
 
@@ -1730,10 +1704,8 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, waitingC
     if (isStop) {
       if (item.status === t[currentLang].active) {
         statusStyle = "background: #fdf2f2; color: #9b1c1c; border: 1px solid rgba(155,28,28,0.25);";
-      } else if (item.status === t[currentLang].upcoming) {
+      } else {
         statusStyle = "background: #fff8e6; color: #b25e00; border: 1px solid rgba(178,94,0,0.3);";
-      } else if (item.status === t[currentLang].waitingList) {
-        statusStyle = "background: #e6f7f4; color: #0f766e; border: 1px solid rgba(15,118,110,0.25);";
       }
     } else {
       statusStyle = "background: #ecfdf5; color: #065f46; border: 1px solid rgba(6,95,70,0.25);";
@@ -1745,10 +1717,8 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, waitingC
           let chipStyle = "";
           if (r.status === 'active') {
             chipStyle = "background: #fdf2f2; color: #9b1c1c; border: 1px solid rgba(155,28,28,0.2);";
-          } else if (r.status === 'upcoming') {
+          } else {
             chipStyle = "background: #fff8e6; color: #b25e00; border: 1px solid rgba(178,94,0,0.2);";
-          } else if (r.status === 'waiting') {
-            chipStyle = "background: #e6f7f4; color: #0f766e; border: 1px solid rgba(15,118,110,0.2);";
           }
           return `<span style="display: inline-block; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; margin: 2px; white-space: nowrap; ${chipStyle}">${escapeHTML(r.text)}</span>`;
         }).join(" ")
