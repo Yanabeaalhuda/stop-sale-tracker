@@ -423,7 +423,8 @@ const CANDIDATE_LOGO_NAMES = ["LOGO.png","logo.png","LOGO.jpg","logo.jpg","logo.
 const CANDIDATE_SLOGAN_NAMES = ["SLOGAN.png","slogan.png","SLOGAN.jpg","slogan.jpg","banner.png","hero.png"];
 const CANDIDATE_XLSX_NAMES = [
   "stop-sale.xlsx","Stop-Sale.xlsx","stop_sale.xlsx","StopSale.xlsx","stopsale.xlsx",
-  "Availability Calendar.xlsx","Copy of Availability Calendar.xlsx","Copy of Availability Calendar (1).xlsx",
+  "Availability Calendar (2).xlsx","Availability Calendar (1).xlsx","Availability Calendar (3).xlsx","Availability Calendar (4).xlsx","Availability Calendar (5).xlsx",
+  "Availability Calendar.xlsx","Copy of Availability Calendar.xlsx","Copy of Availability Calendar (1).xlsx","Copy of Availability Calendar (2).xlsx","Copy of Availability Calendar (3).xlsx",
   "AvailabilityCalendar.xlsx","Availability_Calendar.xlsx","calendar.xlsx","Calendar.xlsx",
   "data.xlsx","Data.xlsx","tracker.xlsx","export.xlsx","sheet.xlsx","report.xlsx",
   "hotel.xlsx","hotels.xlsx","yanabea.xlsx","Yanabea.xlsx"
@@ -437,11 +438,19 @@ async function discoverManifestAssets(){
       if(res.ok){
         const list = await res.json();
         if(Array.isArray(list) && list.length){
-          return list.map(item => {
+          const items = list.map(item => {
             const filePath = typeof item === "string" ? item : (item.path || item.url || item.name);
             const fileName = filePath.split("/").pop();
             return { url: filePath, name: fileName, path: filePath };
           });
+          const validItems = [];
+          for(const it of items){
+            try {
+              const check = await fetch(it.url, { method: "HEAD", cache: "no-store" });
+              if(check.ok || check.status === 405) validItems.push(it);
+            } catch(e){}
+          }
+          if(validItems.length) return validItems;
         }
       }
     } catch(e) {}
@@ -491,7 +500,7 @@ async function fillMissingAssetsViaProbe(assets){
     result.xlsxList = result.xlsx ? [result.xlsx] : [];
   }
 
-  // First check if manifest.json or files.json exists in data/ folder
+  // First check if manifest.json or files.json exists in data/ folder with valid files
   if(!result.xlsxList.length){
     const manifestList = await discoverManifestAssets();
     if(manifestList && manifestList.length){
