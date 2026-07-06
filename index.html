@@ -72,6 +72,7 @@
   .badge{display:inline-block;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:bold;white-space:nowrap}
   .badge.active{background:#fdeceb;color:var(--red);border:1px solid rgba(176,0,32,.3)}
   .badge.upcoming{background:#fff4e0;color:var(--orange);border:1px solid rgba(181,106,0,.3)}
+  .badge.waiting{background:#f5f3ff;color:#7c3aed;border:1px solid rgba(124,58,237,.3)}
   .badge.clear{background:#eafaf0;color:var(--green);border:1px solid rgba(8,122,54,.3)}
   .badge.count{background:#eee;color:#555;border:1px solid #ddd}
   .hotel-body.collapsed{display:none}
@@ -82,9 +83,11 @@
   tr:hover td{background:#fffaf1}
   .range-chip{display:inline-block;background:#fdeceb;color:var(--burgundy);border:1px solid rgba(176,0,32,.25);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:bold;margin:2px 4px 2px 0}
   .range-chip.upcoming{background:#fff4e0;border-color:rgba(181,106,0,.3)}
+  .range-chip.waiting{background:#f5f3ff;border-color:rgba(124,58,237,.3);color:#7c3aed}
   .status-pill{font-size:11px;font-weight:bold;border-radius:999px;padding:4px 9px;display:inline-block}
   .status-pill.active{background:var(--red);color:#fff}
   .status-pill.upcoming{background:var(--orange);color:#fff}
+  .status-pill.waiting{background:#7c3aed;color:#fff}
   .empty-state{padding:40px 20px;text-align:center;color:var(--muted)}
   .empty-state .big{font-size:40px;margin-bottom:10px}
   .footer{color:var(--burgundy);font-size:14px;font-weight:bold;letter-spacing:.5px;text-align:center;margin:18px}
@@ -197,6 +200,7 @@
     <div class="card metric"><div class="label" data-i18n="totalHotels">Hotels Loaded</div><div class="value" id="mHotels">0</div></div>
     <div class="card metric alert"><div class="label" data-i18n="activeStops">Active Stop Sales</div><div class="value" id="mActive">0</div></div>
     <div class="card metric"><div class="label" data-i18n="upcomingStops">Upcoming Stop Sales</div><div class="value" id="mUpcoming">0</div></div>
+    <div class="card metric" style="border-left: 4px solid #7c3aed;"><div class="label" data-i18n="waitingStops">Waiting List Stops</div><div class="value" id="mWaiting" style="color: #7c3aed;">0</div></div>
     <div class="card metric"><div class="label" data-i18n="dataStatus">Data Status</div><div class="value" id="mStatus">—</div></div>
   </section>
 
@@ -650,7 +654,9 @@ const t = {
     exportExcel:"Export Excel",
     exportPNG:"Export PNG",
     exportCalendar:"Export Calendar",
-    noExportData:"No data available to export."
+    noExportData:"No data available to export.",
+    waitingStops:"Waiting List Stops",
+    waitingList:"Waiting List"
   },
   ar:{
     title:"متابعة تواريخ إيقاف البيع - ينابيع الهدى",
@@ -692,7 +698,9 @@ const t = {
     exportExcel:"تصدير Excel",
     exportPNG:"تصدير صورة PNG",
     exportCalendar:"تصدير التقويم",
-    noExportData:"لا توجد بيانات متاحة للتصدير."
+    noExportData:"لا توجد بيانات متاحة للتصدير.",
+    waitingStops:"إيقافات قائمة الانتظار",
+    waitingList:"قائمة الانتظار"
   }
 };
 
@@ -1353,13 +1361,44 @@ function abbreviateHotelName(name){
 function escapeHTML(v){return String(v||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function hashCode(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h<<5)-h+s.charCodeAt(i); h|=0; } return h; }
 
+function getRangeStatus(r) {
+  if (r.start <= today) {
+    return 'active';
+  }
+  const startDate = dayNumberToDate(r.start);
+  const todayDate = dayNumberToDate(today);
+  const isFutureMonth = (startDate.getUTCFullYear() > todayDate.getUTCFullYear()) ||
+                        (startDate.getUTCFullYear() === todayDate.getUTCFullYear() && startDate.getUTCMonth() > todayDate.getUTCMonth());
+  if (isFutureMonth) {
+    return 'waiting';
+  }
+  return 'upcoming';
+}
+
+function getOverallStatus(ranges) {
+  if (!ranges || !ranges.length) return 'clear';
+  let hasActive = false;
+  let hasUpcoming = false;
+  let hasWaiting = false;
+  ranges.forEach(r => {
+    const status = getRangeStatus(r);
+    if (status === 'active') hasActive = true;
+    else if (status === 'upcoming') hasUpcoming = true;
+    else if (status === 'waiting') hasWaiting = true;
+  });
+  if (hasActive) return 'active';
+  if (hasUpcoming) return 'upcoming';
+  if (hasWaiting) return 'waiting';
+  return 'clear';
+}
+
 function render(){
   const ranges = buildRanges();
   const hotelNames = Object.keys(ranges).sort((a,b)=>a.localeCompare(b));
   const query = normalize(hotelSearch.value);
   const onlyAffectedFlag = onlyAffected.checked;
 
-  let activeCount = 0, upcomingCount = 0;
+  let activeCount = 0, upcomingCount = 0, waitingCount = 0;
   const cardsHtml = [];
 
   hotelNames.forEach(hotel=>{
@@ -1370,26 +1409,36 @@ function render(){
     if(query && !normalize(hotel).includes(query)) return;
     if(onlyAffectedFlag && !hasAnyStop) return;
 
-    let hotelActive=false, hotelUpcoming=false;
+    let hotelStatus = 'clear'; // 'active', 'upcoming', 'waiting', 'clear'
     const rows = roomKeys.map(key=>{
       const room = rooms[key];
       const chips = room.ranges.map(r=>{
-        const isActive = r.start <= today;
-        if(isActive){ hotelActive=true; activeCount++; } else { hotelUpcoming=true; upcomingCount++; }
+        const status = getRangeStatus(r);
+        if(status === 'active') { activeCount++; }
+        else if(status === 'upcoming') { upcomingCount++; }
+        else if(status === 'waiting') { waitingCount++; }
         const label = (r.start===r.end) ? fmtDayNumber(r.start) : `${fmtDayNumber(r.start)} → ${fmtDayNumber(r.end)}`;
-        return `<span class="range-chip ${isActive?'':'upcoming'}">${label}</span>`;
+        return `<span class="range-chip ${status}">${label}</span>`;
       }).join(" ");
-      const anyActive = room.ranges.some(r=>r.start<=today);
-      const pill = anyActive
-        ? `<span class="status-pill active">${t[currentLang].active}</span>`
-        : `<span class="status-pill upcoming">${t[currentLang].upcoming}</span>`;
+      
+      const overallRoomStatus = getOverallStatus(room.ranges);
+      if(overallRoomStatus === 'active') hotelStatus = 'active';
+      else if(overallRoomStatus === 'upcoming' && hotelStatus !== 'active') hotelStatus = 'upcoming';
+      else if(overallRoomStatus === 'waiting' && hotelStatus !== 'active' && hotelStatus !== 'upcoming') hotelStatus = 'waiting';
+
+      const pill = `<span class="status-pill ${overallRoomStatus}">
+        ${overallRoomStatus === 'active' ? t[currentLang].active : (overallRoomStatus === 'upcoming' ? t[currentLang].upcoming : t[currentLang].waitingList)}
+      </span>`;
       return `<tr><td>${escapeHTML(room.display)}</td><td>${chips}</td><td>${pill}</td></tr>`;
     }).join("");
 
     const key = hotel.replace(/[^a-zA-Z0-9]/g,"_")+"_"+Math.abs(hashCode(hotel));
-    const badge = hasAnyStop
-      ? (hotelActive ? `<span class="badge active">${t[currentLang].active}</span>` : `<span class="badge upcoming">${t[currentLang].upcoming}</span>`)
-      : `<span class="badge clear">${t[currentLang].noStopSale}</span>`;
+    let badge = `<span class="badge clear">${t[currentLang].noStopSale}</span>`;
+    if(hasAnyStop){
+      if(hotelStatus === 'active') badge = `<span class="badge active">${t[currentLang].active}</span>`;
+      else if(hotelStatus === 'upcoming') badge = `<span class="badge upcoming">${t[currentLang].upcoming}</span>`;
+      else if(hotelStatus === 'waiting') badge = `<span class="badge waiting">${t[currentLang].waitingList}</span>`;
+    }
     const countBadge = hasAnyStop ? `<span class="badge count">${roomKeys.length}</span>` : "";
 
     const tableOrEmpty = hasAnyStop
@@ -1417,6 +1466,7 @@ function render(){
   mHotels.innerText = hotelNames.length;
   mActive.innerText = activeCount;
   mUpcoming.innerText = upcomingCount;
+  mWaiting.innerText = waitingCount;
 
   if(!hotelNames.length){
     resultsWrap.innerHTML = `<div class="empty-state"><div class="big">📅</div><div>${t[currentLang].noHotels}</div></div>`;
@@ -1474,6 +1524,7 @@ function exportReport(format) {
   const totalHotelsCount = document.getElementById("mHotels").innerText;
   const activeCount = document.getElementById("mActive").innerText;
   const upcomingCount = document.getElementById("mUpcoming").innerText;
+  const waitingCount = document.getElementById("mWaiting").innerText;
 
   const query = normalize(document.getElementById("hotelSearch").value);
   const onlyAffectedFlag = document.getElementById("onlyAffected").checked;
@@ -1502,8 +1553,12 @@ function exportReport(format) {
         const periodsText = room.ranges.map(r => {
           return (r.start === r.end) ? fmtDayNumber(r.start) : `${fmtDayNumber(r.start)} → ${fmtDayNumber(r.end)}`;
         }).join(", ");
-        const anyActive = room.ranges.some(r => r.start <= today);
-        const statusText = anyActive ? t[currentLang].active : t[currentLang].upcoming;
+        
+        const overallRoomStatus = getOverallStatus(room.ranges);
+        const statusText = overallRoomStatus === 'active' 
+          ? t[currentLang].active 
+          : (overallRoomStatus === 'upcoming' ? t[currentLang].upcoming : t[currentLang].waitingList);
+
         filteredData.push({
           hotel: hotel,
           room: room.display,
@@ -1517,42 +1572,64 @@ function exportReport(format) {
   const timestamp = getFormattedDateTime();
 
   if (format === 'excel') {
-    exportExcelReport(filteredData, totalHotelsCount, activeCount, upcomingCount, timestamp);
+    exportExcelReport(filteredData, totalHotelsCount, activeCount, upcomingCount, waitingCount, timestamp);
   } else if (format === 'png') {
-    exportPNGReport(filteredData, totalHotelsCount, activeCount, upcomingCount, timestamp);
+    exportPNGReport(filteredData, totalHotelsCount, activeCount, upcomingCount, waitingCount, timestamp);
   }
 }
 
-function exportExcelReport(data, totalHotels, activeCount, upcomingCount, timestamp) {
+function exportExcelReport(data, totalHotels, activeCount, upcomingCount, waitingCount, timestamp) {
   const isAr = currentLang === 'ar';
+  
   const title = isAr ? "ينابيع الهدى - تقرير تواريخ إيقاف البيع" : "Yanabea Alhuda - Stop Sale Tracker Report";
   
-  const headers = isAr 
+  const summaryHeaders = isAr 
+    ? ["إجمالي الفنادق", "إيقاف فعال الآن", "إيقاف بيع قادم", "قائمة الانتظار"]
+    : ["Total Hotels Loaded", "Active Stop Sales", "Upcoming Stop Sales", "Waiting List Stops"];
+    
+  const summaryValues = [
+    parseInt(totalHotels),
+    parseInt(activeCount),
+    parseInt(upcomingCount),
+    parseInt(waitingCount)
+  ];
+  
+  const dataHeaders = isAr 
     ? ["اسم الفندق", "نوع الغرفة", "فترات إيقاف البيع", "الحالة"]
     : ["Hotel Name", "Room Type", "Stop Sale Period(s)", "Status"];
 
-  const metaRows = [
-    [title],
-    [isAr ? "تاريخ الإنشاء:" : "Report Generated:", timestamp],
-    [
-      isAr ? "إجمالي الفنادق:" : "Total Hotels Loaded:", parseInt(totalHotels),
-      isAr ? "إيقاف فعال:" : "Active Stop Sales:", parseInt(activeCount),
-      isAr ? "إيقاف قادم:" : "Upcoming Stop Sales:", parseInt(upcomingCount)
-    ],
-    []
+  const aoa = [
+    [title], // Row 1: Merged Title
+    [isAr ? "تاريخ الإنشاء:" : "Report Generated:", timestamp], // Row 2: Metadata info
+    [], // Row 3: Spacer
+    summaryHeaders, // Row 4: Summary box headers
+    summaryValues,  // Row 5: Summary box values
+    [], // Row 6: Spacer
+    dataHeaders // Row 7: Main data headers
   ];
 
-  const dataRows = data.map(item => [item.hotel, item.room, item.periods, item.status]);
-  const aoa = metaRows.concat([headers]).concat(dataRows);
+  data.forEach(item => {
+    aoa.push([item.hotel, item.room, item.periods, item.status]);
+  });
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
 
-  ws['!cols'] = [
-    { wch: 30 },
-    { wch: 25 },
-    { wch: 45 },
-    { wch: 15 }
+  // Merge A1:D1 for Title, B2:D2 for timestamp
+  ws['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // A1:D1
+    { s: { r: 1, c: 1 }, e: { r: 1, c: 3 } }  // B2:D2
   ];
+
+  // Set optimal column widths to prevent truncation
+  ws['!cols'] = [
+    { wch: 32 }, // Hotel Name
+    { wch: 25 }, // Room Type
+    { wch: 48 }, // Periods
+    { wch: 22 }  // Status
+  ];
+
+  // Force Excel to draw borders / gridlines around cells
+  ws['!views'] = [{ showGridLines: true }];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Stop Sales");
@@ -1564,7 +1641,7 @@ function exportExcelReport(data, totalHotels, activeCount, upcomingCount, timest
   XLSX.writeFile(wb, fileName);
 }
 
-function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestamp) {
+function exportPNGReport(data, totalHotels, activeCount, upcomingCount, waitingCount, timestamp) {
   const isAr = currentLang === 'ar';
   const logo = document.getElementById("brandLogo");
   const logoSrc = (logo && logo.style.display !== 'none') ? getBase64Image(logo) : '';
@@ -1574,30 +1651,30 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
   reportContainer.style.position = "absolute";
   reportContainer.style.left = "-9999px";
   reportContainer.style.top = "0";
-  reportContainer.style.width = "1000px";
+  reportContainer.style.width = "1050px";
   reportContainer.style.background = "#ffffff";
   reportContainer.style.color = "#202020";
-  reportContainer.style.fontFamily = "Arial, Helvetica, sans-serif";
-  reportContainer.style.padding = "40px";
+  reportContainer.style.fontFamily = "'Inter', 'Segoe UI', Arial, sans-serif";
+  reportContainer.style.padding = "45px";
   reportContainer.style.boxSizing = "border-box";
   reportContainer.style.direction = isAr ? "rtl" : "ltr";
   reportContainer.style.textAlign = isAr ? "right" : "left";
 
   let headerHtml = `
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #d4af62; padding-bottom: 20px; margin-bottom: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #d4af62; padding-bottom: 22px; margin-bottom: 30px;">
       <div style="display: flex; align-items: center; gap: 20px;">
         ${logoSrc ? `<img src="${logoSrc}" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid #d4af62; object-fit: cover;" />` : ''}
         <div>
-          <h1 style="margin: 0; color: #6f1028; font-size: 24px; font-weight: bold;">
+          <h1 style="margin: 0; color: #6f1028; font-size: 24px; font-weight: bold; letter-spacing: 0.3px;">
             ${isAr ? "متابعة تواريخ إيقاف البيع - ينابيع الهدى" : "Yanabea Alhuda Stop Sale Tracker"}
           </h1>
-          <p style="margin: 5px 0 0; color: #6f6f6f; font-size: 14px;">
+          <p style="margin: 6px 0 0; color: #6f6f6f; font-size: 14px; font-weight: 500;">
             ${isAr ? "سكن مطمئن... لرحلة مباركة" : "Peaceful Stay... for a Blessed Journey"}
           </p>
         </div>
       </div>
-      <div style="text-align: ${isAr ? 'left' : 'right'}; font-size: 13px; color: #6f6f6f;">
-        <div style="font-weight: bold; color: #6f1028; margin-bottom: 4px;">
+      <div style="text-align: ${isAr ? 'left' : 'right'}; font-size: 13px; color: #6f6f6f; line-height: 1.5;">
+        <div style="font-weight: bold; color: #6f1028; font-size: 14px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
           ${isAr ? "تقرير رسمي" : "Official Report"}
         </div>
         <div>${isAr ? "تاريخ الإنشاء:" : "Generated:"} ${timestamp}</div>
@@ -1606,29 +1683,37 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
   `;
 
   let metricsHtml = `
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;">
-      <div style="background: #fffdf9; border: 1px solid #eadfce; border-radius: 12px; padding: 16px; text-align: center;">
-        <div style="font-size: 13px; color: #6f6f6f; font-weight: bold; margin-bottom: 6px;">
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 35px;">
+      <div style="background: #ffffff; border: 1px solid #eadfce; border-left: 5px solid #6f1028; border-right: ${isAr ? '5px solid #6f1028' : 'none'}; border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
+        <div style="font-size: 12px; color: #6f6f6f; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.2px;">
           ${isAr ? "إجمالي الفنادق" : "Total Hotels Loaded"}
         </div>
-        <div style="font-size: 22px; font-weight: bold; color: #6f1028;">
+        <div style="font-size: 26px; font-weight: bold; color: #6f1028;">
           ${totalHotels}
         </div>
       </div>
-      <div style="background: #fff9f9; border: 1px solid #f9e2e2; border-radius: 12px; padding: 16px; text-align: center;">
-        <div style="font-size: 13px; color: #6f6f6f; font-weight: bold; margin-bottom: 6px;">
+      <div style="background: #ffffff; border: 1px solid #eadfce; border-left: 5px solid #b00020; border-right: ${isAr ? '5px solid #b00020' : 'none'}; border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
+        <div style="font-size: 12px; color: #6f6f6f; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.2px;">
           ${isAr ? "إيقاف فعال الآن" : "Active Stop Sales"}
         </div>
-        <div style="font-size: 22px; font-weight: bold; color: #b00020;">
+        <div style="font-size: 26px; font-weight: bold; color: #b00020;">
           ${activeCount}
         </div>
       </div>
-      <div style="background: #fffdf3; border: 1px solid #faeed0; border-radius: 12px; padding: 16px; text-align: center;">
-        <div style="font-size: 13px; color: #6f6f6f; font-weight: bold; margin-bottom: 6px;">
+      <div style="background: #ffffff; border: 1px solid #eadfce; border-left: 5px solid #b56a00; border-right: ${isAr ? '5px solid #b56a00' : 'none'}; border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
+        <div style="font-size: 12px; color: #6f6f6f; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.2px;">
           ${isAr ? "إيقاف بيع قادم" : "Upcoming Stop Sales"}
         </div>
-        <div style="font-size: 22px; font-weight: bold; color: #b56a00;">
+        <div style="font-size: 26px; font-weight: bold; color: #b56a00;">
           ${upcomingCount}
+        </div>
+      </div>
+      <div style="background: #ffffff; border: 1px solid #eadfce; border-left: 5px solid #7c3aed; border-right: ${isAr ? '5px solid #7c3aed' : 'none'}; border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
+        <div style="font-size: 12px; color: #6f6f6f; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.2px;">
+          ${isAr ? "قائمة الانتظار" : "Waiting List Stops"}
+        </div>
+        <div style="font-size: 26px; font-weight: bold; color: #7c3aed;">
+          ${waitingCount}
         </div>
       </div>
     </div>
@@ -1636,19 +1721,41 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
 
   let tableRows = data.map((item, idx) => {
     const isStop = item.periods !== "—" && !item.room.includes(t[currentLang].noStopSale || "No stop-sale");
-    const statusStyle = isStop 
-      ? (item.status === t[currentLang].active 
-        ? "background: #fdeceb; color: #b00020; border: 1px solid rgba(176,0,32,.3);" 
-        : "background: #fff4e0; color: #b56a00; border: 1px solid rgba(181,106,0,.3);")
-      : "background: #eafaf0; color: #087a36; border: 1px solid rgba(8,122,54,.3);";
+    
+    let statusStyle = "";
+    if (isStop) {
+      if (item.status === t[currentLang].active) {
+        statusStyle = "background: #fdf2f2; color: #9b1c1c; border: 1px solid rgba(155,28,28,0.25);";
+      } else if (item.status === t[currentLang].upcoming) {
+        statusStyle = "background: #fff8e6; color: #b25e00; border: 1px solid rgba(178,94,0,0.3);";
+      } else if (item.status === t[currentLang].waitingList) {
+        statusStyle = "background: #f5f3ff; color: #5b21b6; border: 1px solid rgba(91,33,182,0.25);";
+      }
+    } else {
+      statusStyle = "background: #ecfdf5; color: #065f46; border: 1px solid rgba(6,95,70,0.25);";
+    }
+
+    // Render period dates as individual clean chips
+    const periodChips = item.periods.split(", ").map(p => {
+      if (p === "—" || p === "") return "—";
+      let chipStyle = "";
+      if (item.status === t[currentLang].active) {
+        chipStyle = "background: #fdf2f2; color: #9b1c1c; border: 1px solid rgba(155,28,28,0.2);";
+      } else if (item.status === t[currentLang].upcoming) {
+        chipStyle = "background: #fff8e6; color: #b25e00; border: 1px solid rgba(178,94,0,0.2);";
+      } else if (item.status === t[currentLang].waitingList) {
+        chipStyle = "background: #f5f3ff; color: #5b21b6; border: 1px solid rgba(91,33,182,0.15);";
+      }
+      return `<span style="display: inline-block; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; margin: 2px; white-space: nowrap; ${chipStyle}">${escapeHTML(p)}</span>`;
+    }).join(" ");
 
     return `
-      <tr style="${idx % 2 === 1 ? 'background: #faf8f5;' : ''}">
-        <td style="border-bottom: 1px solid #eadfce; padding: 12px 16px; font-size: 13px; font-weight: bold; color: #202020; text-align: ${isAr ? 'right' : 'left'};">${escapeHTML(item.hotel)}</td>
-        <td style="border-bottom: 1px solid #eadfce; padding: 12px 16px; font-size: 13px; color: #202020; text-align: ${isAr ? 'right' : 'left'};">${escapeHTML(item.room)}</td>
-        <td style="border-bottom: 1px solid #eadfce; padding: 12px 16px; font-size: 13px; color: #202020; text-align: ${isAr ? 'right' : 'left'};">${escapeHTML(item.periods)}</td>
-        <td style="border-bottom: 1px solid #eadfce; padding: 12px 16px; font-size: 13px; text-align: center;">
-          <span style="display: inline-block; border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: bold; ${statusStyle}">
+      <tr style="${idx % 2 === 1 ? 'background: #fdfcfb;' : ''}">
+        <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; font-weight: 700; color: #202020; text-align: ${isAr ? 'right' : 'left'};">${escapeHTML(item.hotel)}</td>
+        <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; font-weight: 500; color: #404040; text-align: ${isAr ? 'right' : 'left'};">${escapeHTML(item.room)}</td>
+        <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'};">${periodChips}</td>
+        <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; text-align: center;">
+          <span style="display: inline-block; border-radius: 999px; padding: 5px 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; ${statusStyle}">
             ${escapeHTML(item.status)}
           </span>
         </td>
@@ -1657,13 +1764,13 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
   }).join("");
 
   let tableHtml = `
-    <table style="width: 100%; border-collapse: collapse; border: 1px solid #eadfce; border-radius: 12px; overflow: hidden; margin-bottom: 30px;">
+    <table style="width: 100%; border-collapse: collapse; border: 1px solid #eadfce; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.02); margin-bottom: 35px;">
       <thead>
         <tr style="background: #6f1028; color: #ffffff;">
-          <th style="padding: 12px 16px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold;">${isAr ? "اسم الفندق" : "Hotel Name"}</th>
-          <th style="padding: 12px 16px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold;">${isAr ? "نوع الغرفة" : "Room Type"}</th>
-          <th style="padding: 12px 16px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold;">${isAr ? "فترات إيقاف البيع" : "Stop Sale Period(s)"}</th>
-          <th style="padding: 12px 16px; font-size: 13px; text-align: center; font-weight: bold; width: 120px;">${isAr ? "الحالة" : "Status"}</th>
+          <th style="padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px;">${isAr ? "اسم الفندق" : "Hotel Name"}</th>
+          <th style="padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px;">${isAr ? "نوع الغرفة" : "Room Type"}</th>
+          <th style="padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px;">${isAr ? "فترات إيقاف البيع" : "Stop Sale Period(s)"}</th>
+          <th style="padding: 14px 18px; font-size: 13px; text-align: center; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; width: 140px;">${isAr ? "الحالة" : "Status"}</th>
         </tr>
       </thead>
       <tbody>
@@ -1673,7 +1780,7 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
   `;
 
   let footerHtml = `
-    <div style="border-top: 1px solid #eadfce; padding-top: 15px; margin-top: 30px; text-align: center; font-size: 11px; color: #6f6f6f; font-weight: bold; letter-spacing: 0.5px;">
+    <div style="border-top: 1px solid #eadfce; padding-top: 18px; margin-top: 35px; text-align: center; font-size: 11px; color: #6f6f6f; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">
       ${isAr ? "حقوق الطبع محفوظة ينابيع الهدى 2026 © سكن مطمئن... لرحلة مباركة" : "COPYRIGHTS YANABEA ALHUDA 2026 © Peaceful Stay... for a Blessed Journey"}
     </div>
   `;
