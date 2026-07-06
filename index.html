@@ -72,7 +72,7 @@
   .badge{display:inline-block;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:bold;white-space:nowrap}
   .badge.active{background:#fdeceb;color:var(--red);border:1px solid rgba(176,0,32,.3)}
   .badge.upcoming{background:#fff4e0;color:var(--orange);border:1px solid rgba(181,106,0,.3)}
-  .badge.waiting{background:#f5f3ff;color:#7c3aed;border:1px solid rgba(124,58,237,.3)}
+  .badge.waiting{background:#e6f7f4;color:#0f766e;border:1px solid rgba(15,118,110,.3)}
   .badge.clear{background:#eafaf0;color:var(--green);border:1px solid rgba(8,122,54,.3)}
   .badge.count{background:#eee;color:#555;border:1px solid #ddd}
   .hotel-body.collapsed{display:none}
@@ -83,11 +83,11 @@
   tr:hover td{background:#fffaf1}
   .range-chip{display:inline-block;background:#fdeceb;color:var(--burgundy);border:1px solid rgba(176,0,32,.25);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:bold;margin:2px 4px 2px 0}
   .range-chip.upcoming{background:#fff4e0;border-color:rgba(181,106,0,.3)}
-  .range-chip.waiting{background:#f5f3ff;border-color:rgba(124,58,237,.3);color:#7c3aed}
+  .range-chip.waiting{background:#e6f7f4;border-color:rgba(15,118,110,.3);color:#0f766e}
   .status-pill{font-size:11px;font-weight:bold;border-radius:999px;padding:4px 9px;display:inline-block}
   .status-pill.active{background:var(--red);color:#fff}
   .status-pill.upcoming{background:var(--orange);color:#fff}
-  .status-pill.waiting{background:#7c3aed;color:#fff}
+  .status-pill.waiting{background:#0f766e;color:#fff}
   .empty-state{padding:40px 20px;text-align:center;color:var(--muted)}
   .empty-state .big{font-size:40px;margin-bottom:10px}
   .footer{color:var(--burgundy);font-size:14px;font-weight:bold;letter-spacing:.5px;text-align:center;margin:18px}
@@ -200,7 +200,7 @@
     <div class="card metric"><div class="label" data-i18n="totalHotels">Hotels Loaded</div><div class="value" id="mHotels">0</div></div>
     <div class="card metric alert"><div class="label" data-i18n="activeStops">Active Stop Sales</div><div class="value" id="mActive">0</div></div>
     <div class="card metric"><div class="label" data-i18n="upcomingStops">Upcoming Stop Sales</div><div class="value" id="mUpcoming">0</div></div>
-    <div class="card metric" style="border-left: 4px solid #7c3aed;"><div class="label" data-i18n="waitingStops">Waiting List Stops</div><div class="value" id="mWaiting" style="color: #7c3aed;">0</div></div>
+    <div class="card metric" style="border-left: 4px solid #0f766e;"><div class="label" data-i18n="waitingStops">Waiting List Stops</div><div class="value" id="mWaiting" style="color: #0f766e;">0</div></div>
     <div class="card metric"><div class="label" data-i18n="dataStatus">Data Status</div><div class="value" id="mStatus">—</div></div>
   </section>
 
@@ -1545,14 +1545,17 @@ function exportReport(format) {
         hotel: hotel,
         room: t[currentLang].noStopSale || "No stop-sale dates",
         periods: "—",
+        ranges: [],
         status: t[currentLang].noStopSale || "No stop-sale dates"
       });
     } else {
       roomKeys.forEach(key => {
         const room = rooms[key];
-        const periodsText = room.ranges.map(r => {
-          return (r.start === r.end) ? fmtDayNumber(r.start) : `${fmtDayNumber(r.start)} → ${fmtDayNumber(r.end)}`;
-        }).join(", ");
+        const roomRanges = room.ranges.map(r => {
+          const text = (r.start === r.end) ? fmtDayNumber(r.start) : `${fmtDayNumber(r.start)} → ${fmtDayNumber(r.end)}`;
+          const status = getRangeStatus(r);
+          return { start: r.start, end: r.end, text: text, status: status };
+        });
         
         const overallRoomStatus = getOverallStatus(room.ranges);
         const statusText = overallRoomStatus === 'active' 
@@ -1562,7 +1565,8 @@ function exportReport(format) {
         filteredData.push({
           hotel: hotel,
           room: room.display,
-          periods: periodsText,
+          ranges: roomRanges,
+          periods: roomRanges.map(rg => rg.text).join(", "),
           status: statusText
         });
       });
@@ -1708,11 +1712,11 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, waitingC
           ${upcomingCount}
         </div>
       </div>
-      <div style="background: #ffffff; border: 1px solid #eadfce; border-left: 5px solid #7c3aed; border-right: ${isAr ? '5px solid #7c3aed' : 'none'}; border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
+      <div style="background: #ffffff; border: 1px solid #eadfce; border-left: 5px solid #0f766e; border-right: ${isAr ? '5px solid #0f766e' : 'none'}; border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
         <div style="font-size: 12px; color: #6f6f6f; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.2px;">
           ${isAr ? "قائمة الانتظار" : "Waiting List Stops"}
         </div>
-        <div style="font-size: 26px; font-weight: bold; color: #7c3aed;">
+        <div style="font-size: 26px; font-weight: bold; color: #0f766e;">
           ${waitingCount}
         </div>
       </div>
@@ -1729,25 +1733,26 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, waitingC
       } else if (item.status === t[currentLang].upcoming) {
         statusStyle = "background: #fff8e6; color: #b25e00; border: 1px solid rgba(178,94,0,0.3);";
       } else if (item.status === t[currentLang].waitingList) {
-        statusStyle = "background: #f5f3ff; color: #5b21b6; border: 1px solid rgba(91,33,182,0.25);";
+        statusStyle = "background: #e6f7f4; color: #0f766e; border: 1px solid rgba(15,118,110,0.25);";
       }
     } else {
       statusStyle = "background: #ecfdf5; color: #065f46; border: 1px solid rgba(6,95,70,0.25);";
     }
 
-    // Render period dates as individual clean chips
-    const periodChips = item.periods.split(", ").map(p => {
-      if (p === "—" || p === "") return "—";
-      let chipStyle = "";
-      if (item.status === t[currentLang].active) {
-        chipStyle = "background: #fdf2f2; color: #9b1c1c; border: 1px solid rgba(155,28,28,0.2);";
-      } else if (item.status === t[currentLang].upcoming) {
-        chipStyle = "background: #fff8e6; color: #b25e00; border: 1px solid rgba(178,94,0,0.2);";
-      } else if (item.status === t[currentLang].waitingList) {
-        chipStyle = "background: #f5f3ff; color: #5b21b6; border: 1px solid rgba(91,33,182,0.15);";
-      }
-      return `<span style="display: inline-block; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; margin: 2px; white-space: nowrap; ${chipStyle}">${escapeHTML(p)}</span>`;
-    }).join(" ");
+    // Render period dates as individual clean chips styled to their specific range status!
+    const periodChips = item.ranges && item.ranges.length 
+      ? item.ranges.map(r => {
+          let chipStyle = "";
+          if (r.status === 'active') {
+            chipStyle = "background: #fdf2f2; color: #9b1c1c; border: 1px solid rgba(155,28,28,0.2);";
+          } else if (r.status === 'upcoming') {
+            chipStyle = "background: #fff8e6; color: #b25e00; border: 1px solid rgba(178,94,0,0.2);";
+          } else if (r.status === 'waiting') {
+            chipStyle = "background: #e6f7f4; color: #0f766e; border: 1px solid rgba(15,118,110,0.2);";
+          }
+          return `<span style="display: inline-block; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; margin: 2px; white-space: nowrap; ${chipStyle}">${escapeHTML(r.text)}</span>`;
+        }).join(" ")
+      : "—";
 
     return `
       <tr style="${idx % 2 === 1 ? 'background: #fdfcfb;' : ''}">
