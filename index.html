@@ -422,9 +422,21 @@ const CANDIDATE_FOLDERS = ["data", "files", "assets", ""];
 const CANDIDATE_LOGO_NAMES = ["LOGO.png","logo.png","LOGO.jpg","logo.jpg","logo.webp","logo.svg"];
 const CANDIDATE_SLOGAN_NAMES = ["SLOGAN.png","slogan.png","SLOGAN.jpg","slogan.jpg","banner.png","hero.png"];
 const CANDIDATE_XLSX_NAMES = [
+  "Sheraton Makkah Availability Chart 6 July 2026.xlsx",
+  "Sheraton Makkah Availability Chart.xlsx",
+  "Sheraton Makkah.xlsx",
+  "Sheraton.xlsx",
+  "Availability Calendar (2).xlsx",
+  "Availability Calendar (1).xlsx",
+  "Availability Calendar (3).xlsx",
+  "Availability Calendar (4).xlsx",
+  "Availability Calendar (5).xlsx",
+  "Availability Calendar.xlsx",
+  "Copy of Availability Calendar.xlsx",
+  "Copy of Availability Calendar (1).xlsx",
+  "Copy of Availability Calendar (2).xlsx",
+  "Copy of Availability Calendar (3).xlsx",
   "stop-sale.xlsx","Stop-Sale.xlsx","stop_sale.xlsx","StopSale.xlsx","stopsale.xlsx",
-  "Availability Calendar (2).xlsx","Availability Calendar (1).xlsx","Availability Calendar (3).xlsx","Availability Calendar (4).xlsx","Availability Calendar (5).xlsx",
-  "Availability Calendar.xlsx","Copy of Availability Calendar.xlsx","Copy of Availability Calendar (1).xlsx","Copy of Availability Calendar (2).xlsx","Copy of Availability Calendar (3).xlsx",
   "AvailabilityCalendar.xlsx","Availability_Calendar.xlsx","calendar.xlsx","Calendar.xlsx",
   "data.xlsx","Data.xlsx","tracker.xlsx","export.xlsx","sheet.xlsx","report.xlsx",
   "hotel.xlsx","hotels.xlsx","yanabea.xlsx","Yanabea.xlsx"
@@ -454,6 +466,31 @@ async function discoverManifestAssets(){
         }
       }
     } catch(e) {}
+  }
+  return null;
+}
+
+async function discoverFolderIndexAssets(){
+  for (const folder of ["data", "data/"]){
+    try {
+      const res = await fetch(folder + "?v=" + Date.now(), {cache:"no-store"});
+      if(res.ok){
+        const text = await res.text();
+        const matches = text.match(/href=["']([^"']+\.xlsx?)["']/gi);
+        if(matches){
+          const found = [];
+          matches.forEach(m => {
+            const rawPath = m.replace(/^href=["']/i, "").replace(/["']$/, "");
+            const fullPath = rawPath.startsWith("http") ? rawPath : (rawPath.startsWith("data/") ? rawPath : `data/${rawPath.replace(/^\//,"")}`);
+            const name = fullPath.split("/").pop();
+            if(!found.some(f => f.path === fullPath)){
+              found.push({ url: fullPath, name, path: fullPath });
+            }
+          });
+          if(found.length) return found;
+        }
+      }
+    } catch(e){}
   }
   return null;
 }
@@ -505,6 +542,14 @@ async function fillMissingAssetsViaProbe(assets){
     const manifestList = await discoverManifestAssets();
     if(manifestList && manifestList.length){
       result.xlsxList = manifestList;
+    }
+  }
+
+  // Check if directory index returns links to any files
+  if(!result.xlsxList.length){
+    const indexList = await discoverFolderIndexAssets();
+    if(indexList && indexList.length){
+      result.xlsxList = indexList;
     }
   }
 
@@ -642,11 +687,39 @@ function setLang(lang){
    PARSING
    ============================================================ */
 function isRedFill(cell){
-  if(!cell || !cell.s || !cell.s.fgColor) return false;
-  const rgb = (cell.s.fgColor.rgb || "").toUpperCase();
-  return rgb === "FF0000" || rgb === "FFFF0000";
+  if(!cell || !cell.s) return false;
+  const s = cell.s;
+  let rgb = "";
+  if(s.fgColor && s.fgColor.rgb) rgb = String(s.fgColor.rgb).toUpperCase();
+  else if(s.fill && s.fill.fgColor && s.fill.fgColor.rgb) rgb = String(s.fill.fgColor.rgb).toUpperCase();
+  else if(s.bgColor && s.bgColor.rgb) rgb = String(s.bgColor.rgb).toUpperCase();
+  else if(s.fill && s.fill.bgColor && s.fill.bgColor.rgb) rgb = String(s.fill.bgColor.rgb).toUpperCase();
+
+  if(rgb === "FF0000" || rgb === "FFFF0000" || rgb === "C00000" || rgb === "FFC00000" || rgb === "E60000" || rgb === "CC0000" || rgb === "B00020") return true;
+  return false;
 }
-const LEGEND_LABELS = ["open to sale","white","stop sale","red"];
+const LEGEND_LABELS = ["open to sale","white","stop sale","red","limited availability"];
+
+function cleanHotelName(val){
+  if(!val) return "";
+  let s = String(val).trim();
+  s = s.replace(/SHARETON/gi, "Sheraton");
+  if(s === s.toUpperCase() && s.length > 3){
+    s = s.split(" ").map(w => w ? w[0].toUpperCase() + w.slice(1).toLowerCase() : "").join(" ");
+  }
+  return s;
+}
+
+function defaultHotelFromLabel(fileLabel, sheetName){
+  if(/sheraton/i.test(fileLabel) || /sheraton/i.test(sheetName)) return "Sheraton Makkah";
+  if(sheetName && !/sheet|stop\s*sale|table|data/i.test(sheetName)) return cleanHotelName(sheetName);
+  const clean = fileLabel.replace(/\.xlsx?$/i,"").replace(/\s*\(\d+\)$/,"").trim();
+  return cleanHotelName(clean);
+}
+
+function isExcelDateSerial(val){
+  return typeof val === 'number' && val >= 35000 && val <= 65000;
+}
 
 function canonicalRoomKey(room){
   return normalize(room)
@@ -664,7 +737,7 @@ function resetData(){
 }
 
 function addStopDay(hotel, roomRaw, dayNum){
-  hotel = hotel.trim();
+  hotel = cleanHotelName(hotel);
   const key = isAllRoomsLabel(roomRaw) ? "__ALL__" : canonicalRoomKey(roomRaw);
   if(!hotelData[hotel]) hotelData[hotel] = {};
   if(!hotelData[hotel][key]){
@@ -683,8 +756,6 @@ function parseWorkbook(wb, fileLabel, stats){
   // month and hide old/archived months — if we parsed every hidden tab too,
   // stop-sale marks from old archived months would leak into the current
   // data and no longer match what a person sees when they open the file.
-  // (Falls back to reading everything if every single sheet is hidden,
-  // so the app never ends up with zero data.)
   const sheetMeta = (wb.Workbook && wb.Workbook.Sheets) || [];
   const visibleNames = wb.SheetNames.filter((name, idx) => !(sheetMeta[idx] && sheetMeta[idx].Hidden));
   const namesToParse = visibleNames.length ? visibleNames : wb.SheetNames;
@@ -707,26 +778,26 @@ function parseWorkbook(wb, fileLabel, stats){
       let dateCellCount = 0;
       for(let C=1; C<=range.e.c; C++){
         const cell = ws[XLSX.utils.encode_cell({r:R,c:C})];
-        if(cell && cell.t === 'n' && typeof cell.v === 'number' && cell.z && XLSX.SSF.is_date(cell.z)){
+        if(cell && cell.t === 'n' && typeof cell.v === 'number' && ((cell.z && XLSX.SSF.is_date(cell.z)) || isExcelDateSerial(cell.v))){
           rowDayCols[C] = serialToDayNumber(cell.v);
           dateCellCount++;
         }
       }
       // require several date cells in a row before treating it as a header row
-      // (guards against a single stray date-formatted cell being misread)
       const rowHasDate = dateCellCount >= 5;
 
       if(rowHasDate){
         dayByCol = rowDayCols;
         sheetHasDates = true;
-        if(aVal){ currentHotel = aVal; }
+        if(aVal){ currentHotel = cleanHotelName(aVal); }
         continue;
       }
 
       if(!aVal){ continue; }
       const lower = aVal.toLowerCase();
       if(LEGEND_LABELS.includes(lower)) continue;
-      if(!currentHotel) continue;
+      const targetHotel = currentHotel || defaultHotelFromLabel(fileLabel, sheetName);
+      if(!targetHotel) continue;
       if(!Object.keys(dayByCol).length) continue;
 
       const roomName = aVal;
@@ -734,7 +805,7 @@ function parseWorkbook(wb, fileLabel, stats){
         const C = Number(colStr);
         const cell = ws[XLSX.utils.encode_cell({r:R,c:C})];
         if(isRedFill(cell)){
-          addStopDay(currentHotel, roomName, dayByCol[colStr]);
+          addStopDay(targetHotel, roomName, dayByCol[colStr]);
         }
       });
     }
