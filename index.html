@@ -220,7 +220,14 @@
   </section>
 
   <section class="card">
-    <h2 data-i18n="calendarTitle">Calendar View</h2>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+      <h2 style="margin:0;" data-i18n="calendarTitle">Calendar View</h2>
+      <div style="display:flex; gap:10px;" class="export-actions">
+        <button type="button" id="exportCalBtn" onclick="exportCalendarReport()" style="background:var(--burgundy); color:#fff; border-radius:10px; padding:8px 14px; font-weight:bold; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px; border:0; line-height:1.2; box-shadow:0 2px 5px rgba(0,0,0,0.1); transition:opacity 0.15s ease;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+          <span style="font-size:14px; line-height:1;">📅</span> <span data-i18n="exportCalendar">Export Calendar</span>
+        </button>
+      </div>
+    </div>
     <div class="cal-controls">
       <label class="cal-field">
         <span data-i18n="hotelLabel">Hotel</span>
@@ -642,6 +649,7 @@ const t = {
     dow:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
     exportExcel:"Export Excel",
     exportPNG:"Export PNG",
+    exportCalendar:"Export Calendar",
     noExportData:"No data available to export."
   },
   ar:{
@@ -683,6 +691,7 @@ const t = {
     dow:["أحد","إثنين","ثلاثاء","أربعاء","خميس","جمعة","سبت"],
     exportExcel:"تصدير Excel",
     exportPNG:"تصدير صورة PNG",
+    exportCalendar:"تصدير التقويم",
     noExportData:"لا توجد بيانات متاحة للتصدير."
   }
 };
@@ -1687,6 +1696,151 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
   }).catch(err => {
     console.error("PNG generation failed", err);
     alert("Failed to export PNG. Please try again.");
+    document.body.removeChild(reportContainer);
+  });
+}
+
+function exportCalendarReport() {
+  const hotels = Object.keys(hotelData);
+  if (!hotels.length) {
+    alert(t[currentLang].noExportData || "No data available to export.");
+    return;
+  }
+
+  const isAr = currentLang === 'ar';
+  const logo = document.getElementById("brandLogo");
+  const logoSrc = (logo && logo.style.display !== 'none') ? getBase64Image(logo) : '';
+
+  const hotelSelect = document.getElementById("calHotelSelect");
+  const selectedHotelText = hotelSelect.options[hotelSelect.selectedIndex].text;
+  
+  const roomSelect = document.getElementById("calRoomSelect");
+  const selectedRoomText = roomSelect.options[roomSelect.selectedIndex].text;
+
+  const currentMonthLabel = document.getElementById("calMonthLabel").innerText;
+  const timestamp = getFormattedDateTime();
+
+  const reportContainer = document.createElement("div");
+  reportContainer.id = "export-calendar-container";
+  reportContainer.style.position = "absolute";
+  reportContainer.style.left = "-9999px";
+  reportContainer.style.top = "0";
+  reportContainer.style.width = "1050px";
+  reportContainer.style.background = "#ffffff";
+  reportContainer.style.color = "#202020";
+  reportContainer.style.fontFamily = "Arial, Helvetica, sans-serif";
+  reportContainer.style.padding = "40px";
+  reportContainer.style.boxSizing = "border-box";
+  reportContainer.style.direction = isAr ? "rtl" : "ltr";
+  reportContainer.style.textAlign = isAr ? "right" : "left";
+
+  let headerHtml = `
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #d4af62; padding-bottom: 20px; margin-bottom: 25px;">
+      <div style="display: flex; align-items: center; gap: 20px;">
+        ${logoSrc ? `<img src="${logoSrc}" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid #d4af62; object-fit: cover;" />` : ''}
+        <div>
+          <h1 style="margin: 0; color: #6f1028; font-size: 24px; font-weight: bold;">
+            ${isAr ? "متابعة تواريخ إيقاف البيع - ينابيع الهدى" : "Yanabea Alhuda Stop Sale Tracker"}
+          </h1>
+          <p style="margin: 5px 0 0; color: #6f6f6f; font-size: 14px;">
+            ${isAr ? "سكن مطمئن... لرحلة مباركة" : "Peaceful Stay... for a Blessed Journey"}
+          </p>
+        </div>
+      </div>
+      <div style="text-align: ${isAr ? 'left' : 'right'}; font-size: 13px; color: #6f6f6f;">
+        <div style="font-weight: bold; color: #6f1028; margin-bottom: 4px;">
+          ${isAr ? "تقرير التقويم" : "Calendar Report"}
+        </div>
+        <div>${isAr ? "تاريخ الإنشاء:" : "Generated:"} ${timestamp}</div>
+      </div>
+    </div>
+  `;
+
+  let metaHtml = `
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; background: #fffdf9; border: 1px solid #eadfce; border-radius: 12px; padding: 15px 20px; margin-bottom: 25px;">
+      <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div>
+          <span style="font-weight: bold; color: #6f1028;">${isAr ? "الفندق:" : "Hotel:"}</span>
+          <span style="color: #202020; margin-left: 5px; margin-right: 5px;">${escapeHTML(selectedHotelText)}</span>
+        </div>
+        <div style="border-${isAr ? 'right' : 'left'}: 1px solid #eadfce; padding-${isAr ? 'right' : 'left'}: 20px;">
+          <span style="font-weight: bold; color: #6f1028;">${isAr ? "نوع الغرفة:" : "Room Type:"}</span>
+          <span style="color: #202020; margin-left: 5px; margin-right: 5px;">${escapeHTML(selectedRoomText)}</span>
+        </div>
+      </div>
+      <div style="font-size: 18px; font-weight: bold; color: #6f1028;">
+        📅 ${escapeHTML(currentMonthLabel)}
+      </div>
+    </div>
+  `;
+
+  reportContainer.innerHTML = headerHtml + metaHtml;
+
+  const originalCalShell = document.querySelector(".cal-shell");
+  const calShellClone = originalCalShell.cloneNode(true);
+  
+  calShellClone.style.margin = "0";
+  calShellClone.style.width = "100%";
+  calShellClone.style.maxWidth = "100%";
+  calShellClone.style.boxShadow = "none";
+  calShellClone.style.border = "1px solid #eadfce";
+
+  const calWrapper = document.createElement("div");
+  calWrapper.style.marginBottom = "25px";
+  calWrapper.appendChild(calShellClone);
+  reportContainer.appendChild(calWrapper);
+
+  let legendHtml = `
+    <div style="display: flex; gap: 25px; flex-wrap: wrap; margin-top: 25px; font-size: 13px; color: #6f6f6f; align-items: center; justify-content: center; border-top: 1px dashed #eadfce; padding-top: 20px;">
+      <span style="display: inline-flex; align-items: center; gap: 6px;">
+        <span style="width: 14px; height: 14px; border-radius: 4px; display: inline-block; background: var(--red);"></span>
+        <span>${t[currentLang].legendStop}</span>
+      </span>
+      <span style="display: inline-flex; align-items: center; gap: 6px;">
+        <span style="width: 14px; height: 14px; border-radius: 4px; display: inline-block; background: #fff; border: 1px solid var(--border);"></span>
+        <span>${t[currentLang].legendOpen}</span>
+      </span>
+      <span style="display: inline-flex; align-items: center; gap: 6px;">
+        <span style="width: 14px; height: 14px; border-radius: 4px; display: inline-block; background: #faf7f2; border: 1px solid var(--border);"></span>
+        <span>${t[currentLang].legendPast}</span>
+      </span>
+      <span style="display: inline-flex; align-items: center; gap: 6px;">
+        <span style="width: 14px; height: 14px; border-radius: 4px; display: inline-block; background: var(--gold);"></span>
+        <span>${t[currentLang].legendToday}</span>
+      </span>
+    </div>
+  `;
+
+  let footerHtml = `
+    <div style="border-top: 1px solid #eadfce; padding-top: 15px; margin-top: 25px; text-align: center; font-size: 11px; color: #6f6f6f; font-weight: bold; letter-spacing: 0.5px;">
+      ${isAr ? "حقوق الطبع محفوظة ينابيع الهدى 2026 © سكن مطمئن... لرحلة مباركة" : "COPYRIGHTS YANABEA ALHUDA 2026 © Peaceful Stay... for a Blessed Journey"}
+    </div>
+  `;
+
+  const footerWrapper = document.createElement("div");
+  footerWrapper.innerHTML = legendHtml + footerHtml;
+  reportContainer.appendChild(footerWrapper);
+
+  document.body.appendChild(reportContainer);
+
+  html2canvas(reportContainer, {
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: '#ffffff'
+  }).then(canvas => {
+    const link = document.createElement("a");
+    const dateStr = new Date().toISOString().slice(0,10);
+    const sanitizedMonth = currentMonthLabel.replace(/\s+/g, "_");
+    link.download = isAr 
+      ? `تقرير_تقويم_إيقاف_البيع_${sanitizedMonth}_${dateStr}.png` 
+      : `Stop_Sale_Calendar_${sanitizedMonth}_${dateStr}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+    document.body.removeChild(reportContainer);
+  }).catch(err => {
+    console.error("Calendar PNG generation failed", err);
+    alert("Failed to export calendar. Please try again.");
     document.body.removeChild(reportContainer);
   });
 }
