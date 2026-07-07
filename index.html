@@ -816,6 +816,33 @@ function addStopDay(hotel, roomRaw, dayNum){
   hotelData[hotel][key].dayNumbers.add(dayNum);
 }
 
+function parseDateString(str) {
+  if (!str) return null;
+  const match = String(str).trim().match(/^(\d+)\/([A-Za-z]{3})/i);
+  if (!match) return null;
+  const day = parseInt(match[1]);
+  const monthAbbr = match[2].toLowerCase();
+  
+  const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  const monthIdx = months.indexOf(monthAbbr);
+  if (monthIdx === -1) return null;
+  
+  let year = new Date().getFullYear();
+  if (monthIdx < 5) { // Jan to May
+    if (new Date().getMonth() >= 5) {
+      year = year + 1;
+    }
+  } else if (monthIdx >= 5) { // Jun to Dec
+    if (new Date().getMonth() < 5) {
+      year = year - 1;
+    }
+  }
+  
+  const d = new Date(Date.UTC(year, monthIdx, day));
+  if (isNaN(d.getTime())) return null;
+  return dateToDayNumber(d);
+}
+
 function parseWorkbook(wb, fileLabel, stats){
   // Only read VISIBLE sheet tabs. Workbooks like this one keep one tab per
   // month and hide old/archived months — if we parsed every hidden tab too,
@@ -843,8 +870,19 @@ function parseWorkbook(wb, fileLabel, stats){
       let dateCellCount = 0;
       for(let C=1; C<=range.e.c; C++){
         const cell = ws[XLSX.utils.encode_cell({r:R,c:C})];
-        if(cell && cell.t === 'n' && typeof cell.v === 'number' && ((cell.z && XLSX.SSF.is_date(cell.z)) || isExcelDateSerial(cell.v))){
-          rowDayCols[C] = serialToDayNumber(cell.v);
+        if(!cell) continue;
+
+        let dayNum = null;
+        if(cell.t === 'n' && typeof cell.v === 'number'){
+          if((cell.z && XLSX.SSF.is_date(cell.z)) || isExcelDateSerial(cell.v)){
+            dayNum = serialToDayNumber(cell.v);
+          }
+        } else if(cell.t === 's' || typeof cell.v === 'string'){
+          dayNum = parseDateString(cell.v);
+        }
+
+        if(dayNum !== null){
+          rowDayCols[C] = dayNum;
           dateCellCount++;
         }
       }
