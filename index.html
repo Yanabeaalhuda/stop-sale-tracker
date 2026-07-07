@@ -842,7 +842,7 @@ function parseDateString(str) {
   
   const d = new Date(Date.UTC(year, monthIdx, day));
   if (isNaN(d.getTime())) return null;
-  return dateToDayNumber(d);
+  return Math.round(Date.UTC(year, monthIdx, day) / MS_PER_DAY);
 }
 
 function parseWorkbook(wb, fileLabel, stats){
