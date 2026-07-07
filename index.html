@@ -854,7 +854,14 @@ function parseWorkbook(wb, fileLabel, stats){
       if(rowHasDate){
         dayByCol = rowDayCols;
         sheetHasDates = true;
-        if(aVal){ currentHotel = cleanHotelName(aVal); }
+        let hotelName = aVal;
+        if(!hotelName && R > range.s.r){
+          const prevCell = ws[XLSX.utils.encode_cell({r: R - 1, c: 0})];
+          if(prevCell && prevCell.v != null){
+            hotelName = String(prevCell.v).trim();
+          }
+        }
+        if(hotelName){ currentHotel = cleanHotelName(hotelName); }
         continue;
       }
 
