@@ -554,24 +554,57 @@ async function probeAllExisting(urls){
 async function fillMissingAssetsViaProbe(assets){
   const result = assets ? {...assets} : { xlsxList:[], logoUrl:null, sloganUrl:null };
   if(!result.xlsxList) {
-    result.xlsxList = result.xlsx ? [result.xlsx] : [];
+    result.xlsxList = [];
   }
 
-  // First check if manifest.json or files.json exists in data/ folder with valid files
-  if(!result.xlsxList.length){
-    const manifestList = await discoverManifestAssets();
-    if(manifestList && manifestList.length){
-      result.xlsxList = manifestList;
+  // 1) Discover manifest files
+  let manifestList = [];
+  try {
+    manifestList = await discoverManifestAssets();
+  } catch(e){}
+
+  // 2) Discover folder listing files
+  let indexList = [];
+  try {
+    indexList = await discoverFolderIndexAssets();
+  } catch(e){}
+
+  // 3) Probe candidate names
+  let probedUrls = [];
+  try {
+    probedUrls = await probeAllExisting(buildCandidateUrls(CANDIDATE_FOLDERS, CANDIDATE_XLSX_NAMES));
+  } catch(e){}
+
+  // Combine and deduplicate
+  const allFound = [];
+  const addedUrls = new Set();
+  const add = (url, name, path) => {
+    if(!url) return;
+    const norm = url.toLowerCase().trim();
+    if(!addedUrls.has(norm)){
+      addedUrls.add(norm);
+      allFound.push({ url, name: name || url.split("/").pop(), path: path || url });
     }
+  };
+
+  // Add github-discovered files
+  if(result.xlsxList && result.xlsxList.length){
+    result.xlsxList.forEach(item => add(item.url, item.name, item.path));
+  }
+  // Add manifest files
+  if(manifestList && manifestList.length){
+    manifestList.forEach(item => add(item.url, item.name, item.path));
+  }
+  // Add index listing files
+  if(indexList && indexList.length){
+    indexList.forEach(item => add(item.url, item.name, item.path));
+  }
+  // Add probed files
+  if(probedUrls && probedUrls.length){
+    probedUrls.forEach(url => add(url));
   }
 
-  // Check if directory index returns links to any files
-  if(!result.xlsxList.length){
-    const indexList = await discoverFolderIndexAssets();
-    if(indexList && indexList.length){
-      result.xlsxList = indexList;
-    }
-  }
+  result.xlsxList = allFound;
 
   const tasks = [];
   if(!result.logoUrl){
@@ -580,13 +613,7 @@ async function fillMissingAssetsViaProbe(assets){
   if(!result.sloganUrl){
     tasks.push(probeAnyExisting(buildCandidateUrls(CANDIDATE_FOLDERS, CANDIDATE_SLOGAN_NAMES)).then(url=>{ if(url) result.sloganUrl = url; }));
   }
-  if(!result.xlsxList.length){
-    tasks.push(probeAllExisting(buildCandidateUrls(CANDIDATE_FOLDERS, CANDIDATE_XLSX_NAMES)).then(urls=>{
-      if(urls.length){
-        result.xlsxList = urls.map(u => ({ url: u, name: u.split("/").pop(), path: u }));
-      }
-    }));
-  }
+
   await Promise.all(tasks);
   return result;
 }
