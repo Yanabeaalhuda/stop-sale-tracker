@@ -6,6 +6,7 @@
 <title>Yanabea Alhuda | Stop Sale Tracker</title>
 <script src="files/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script>
   if (typeof XLSX === 'undefined') {
     document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"><\/script>');
@@ -268,6 +269,9 @@
         </button>
         <button type="button" id="exportPngBtn" onclick="exportReport('png')" style="background:var(--burgundy); color:#fff; border-radius:10px; padding:8px 14px; font-weight:bold; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px; border:0; line-height:1.2; box-shadow:0 2px 5px rgba(0,0,0,0.1); transition:opacity 0.15s ease;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
           <span style="font-size:14px; line-height:1;">🖼️</span> <span data-i18n="exportPNG">Export PNG</span>
+        </button>
+        <button type="button" id="exportPdfBtn" onclick="exportReport('pdf')" style="background:var(--burgundy); color:#fff; border-radius:10px; padding:8px 14px; font-weight:bold; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px; border:0; line-height:1.2; box-shadow:0 2px 5px rgba(0,0,0,0.1); transition:opacity 0.15s ease;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+          <span style="font-size:14px; line-height:1;">📄</span> <span data-i18n="exportPDF">Export PDF</span>
         </button>
       </div>
     </div>
@@ -737,6 +741,7 @@ const t = {
     dow:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
     exportExcel:"Export Excel",
     exportPNG:"Export PNG",
+    exportPDF:"Export PDF",
     exportCalendar:"Export Calendar",
     noExportData:"No data available to export.",
     waitingStops:"Waiting List Stops",
@@ -781,6 +786,7 @@ const t = {
     dow:["أحد","إثنين","ثلاثاء","أربعاء","خميس","جمعة","سبت"],
     exportExcel:"تصدير Excel",
     exportPNG:"تصدير صورة PNG",
+    exportPDF:"تصدير ملف PDF",
     exportCalendar:"تصدير التقويم",
     noExportData:"لا توجد بيانات متاحة للتصدير.",
     waitingStops:"إيقافات قائمة الانتظار",
@@ -1692,6 +1698,8 @@ function exportReport(format) {
     exportExcelReport(filteredData, totalHotelsCount, activeCount, upcomingCount, timestamp);
   } else if (format === 'png') {
     exportPNGReport(filteredData, totalHotelsCount, activeCount, upcomingCount, timestamp);
+  } else if (format === 'pdf') {
+    exportPDFReport(filteredData, totalHotelsCount, activeCount, upcomingCount, timestamp);
   }
 }
 
@@ -1908,6 +1916,173 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
   }).catch(err => {
     console.error("PNG generation failed", err);
     alert("Failed to export PNG. Please try again.");
+    document.body.removeChild(reportContainer);
+  });
+}
+
+function exportPDFReport(data, totalHotels, activeCount, upcomingCount, timestamp) {
+  const isAr = currentLang === 'ar';
+  const logo = document.getElementById("brandLogo");
+  const logoSrc = (logo && logo.style.display !== 'none') ? getBase64Image(logo) : '';
+
+  const reportContainer = document.createElement("div");
+  reportContainer.id = "export-report-container-pdf";
+  reportContainer.style.position = "absolute";
+  reportContainer.style.left = "-9999px";
+  reportContainer.style.top = "0";
+  reportContainer.style.width = "1050px";
+  reportContainer.style.background = "#ffffff";
+  reportContainer.style.color = "#202020";
+  reportContainer.style.fontFamily = "'Inter', 'Segoe UI', Arial, sans-serif";
+  reportContainer.style.padding = "45px";
+  reportContainer.style.boxSizing = "border-box";
+  reportContainer.style.direction = isAr ? "rtl" : "ltr";
+  reportContainer.style.textAlign = isAr ? "right" : "left";
+
+  let headerHtml = `
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #d4af62; padding-bottom: 22px; margin-bottom: 30px;">
+      <div style="display: flex; align-items: center; gap: 20px;">
+        ${logoSrc ? `<img src="${logoSrc}" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid #d4af62; object-fit: cover;" />` : ''}
+        <div>
+          <h1 style="margin: 0; color: #6f1028; font-size: 24px; font-weight: bold; letter-spacing: 0.3px;">
+            ${isAr ? "متابعة تواريخ إيقاف البيع - ينابيع الهدى" : "Yanabea Alhuda Stop Sale Tracker"}
+          </h1>
+          <p style="margin: 6px 0 0; color: #6f6f6f; font-size: 14px; font-weight: 500;">
+            ${isAr ? "سكن مطمئن... لرحلة مباركة" : "Peaceful Stay... for a Blessed Journey"}
+          </p>
+        </div>
+      </div>
+      <div style="text-align: ${isAr ? 'left' : 'right'}; font-size: 13px; color: #6f6f6f; line-height: 1.5;">
+        <div style="font-weight: bold; color: #6f1028; font-size: 14px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+          ${isAr ? "تقرير رسمي" : "Official Report"}
+        </div>
+        <div>${isAr ? "تاريخ الإنشاء:" : "Generated:"} ${timestamp}</div>
+      </div>
+    </div>
+  `;
+
+  let metricsHtml = `
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 35px;">
+      <div style="background: #ffffff; border: 1px solid #eadfce; border-left: 5px solid #6f1028; border-right: ${isAr ? '5px solid #6f1028' : 'none'}; border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
+        <div style="font-size: 12px; color: #6f6f6f; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.2px;">
+          ${isAr ? "إجمالي الفنادق" : "Total Hotels Loaded"}
+        </div>
+        <div style="font-size: 26px; font-weight: bold; color: #6f1028;">
+          ${totalHotels}
+        </div>
+      </div>
+      <div style="background: #ffffff; border: 1px solid #eadfce; border-left: 5px solid #b00020; border-right: ${isAr ? '5px solid #b00020' : 'none'}; border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
+        <div style="font-size: 12px; color: #6f6f6f; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.2px;">
+          ${isAr ? "إيقاف فعال الآن" : "Active Stop Sales"}
+        </div>
+        <div style="font-size: 26px; font-weight: bold; color: #b00020;">
+          ${activeCount}
+        </div>
+      </div>
+      <div style="background: #ffffff; border: 1px solid #eadfce; border-left: 5px solid #b56a00; border-right: ${isAr ? '5px solid #b56a00' : 'none'}; border-radius: 12px; padding: 18px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
+        <div style="font-size: 12px; color: #6f6f6f; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.2px;">
+          ${isAr ? "إيقاف بيع قادم" : "Upcoming Stop Sales"}
+        </div>
+        <div style="font-size: 26px; font-weight: bold; color: #b56a00;">
+          ${upcomingCount}
+        </div>
+      </div>
+    </div>
+  `;
+
+  let tableRows = data.map((item, idx) => {
+    const isStop = item.periods !== "—" && !item.room.includes(t[currentLang].noStopSale || "No stop-sale");
+    
+    let statusStyle = "";
+    if (isStop) {
+      if (item.status === t[currentLang].active) {
+        statusStyle = "background: #fdf2f2; color: #9b1c1c; border: 1px solid rgba(155,28,28,0.25);";
+      } else {
+        statusStyle = "background: #fff8e6; color: #b25e00; border: 1px solid rgba(178,94,0,0.3);";
+      }
+    } else {
+      statusStyle = "background: #ecfdf5; color: #065f46; border: 1px solid rgba(6,95,70,0.25);";
+    }
+
+    const periodChips = item.ranges && item.ranges.length 
+      ? item.ranges.map(r => {
+          let chipStyle = "";
+          if (r.status === 'active') {
+            chipStyle = "background: #fdf2f2; color: #9b1c1c; border: 1px solid rgba(155,28,28,0.2);";
+          } else {
+            chipStyle = "background: #fff8e6; color: #b25e00; border: 1px solid rgba(178,94,0,0.2);";
+          }
+          return `<span style="display: inline-block; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600; margin: 2px; white-space: nowrap; ${chipStyle}">${escapeHTML(r.text)}</span>`;
+        }).join(" ")
+      : "—";
+
+    return `
+      <tr style="${idx % 2 === 1 ? 'background: #fdfcfb;' : ''}">
+        <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; font-weight: 700; color: #202020; text-align: ${isAr ? 'right' : 'left'};">${escapeHTML(item.hotel)}</td>
+        <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; font-weight: 500; color: #404040; text-align: ${isAr ? 'right' : 'left'};">${escapeHTML(item.room)}</td>
+        <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'};">${periodChips}</td>
+        <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; text-align: center;">
+          <span style="display: inline-block; border-radius: 999px; padding: 5px 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; white-space: nowrap; ${statusStyle}">
+            ${escapeHTML(item.status)}
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  let tableHtml = `
+    <table style="width: 100%; border-collapse: collapse; border: 1px solid #eadfce; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.02); margin-bottom: 35px;">
+      <thead>
+        <tr style="background: #6f1028; color: #ffffff;">
+          <th style="padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px;">${isAr ? "اسم الفندق" : "Hotel Name"}</th>
+          <th style="padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px;">${isAr ? "نوع الغرفة" : "Room Type"}</th>
+          <th style="padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px;">${isAr ? "فترات إيقاف البيع" : "Stop Sale Period(s)"}</th>
+          <th style="padding: 14px 18px; font-size: 13px; text-align: center; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; width: 140px;">${isAr ? "الحالة" : "Status"}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${tableRows}
+      </tbody>
+    </table>
+  `;
+
+  let footerHtml = `
+    <div style="border-top: 1px solid #eadfce; padding-top: 18px; margin-top: 35px; text-align: center; font-size: 11px; color: #6f6f6f; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">
+      ${isAr ? "حقوق الطبع محفوظة ينابيع الهدى 2026 © سكن مطمئن... لرحلة مباركة" : "COPYRIGHTS YANABEA ALHUDA 2026 © Peaceful Stay... for a Blessed Journey"}
+    </div>
+  `;
+
+  reportContainer.innerHTML = headerHtml + metricsHtml + tableHtml + footerHtml;
+  document.body.appendChild(reportContainer);
+
+  html2canvas(reportContainer, {
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: '#ffffff'
+  }).then(canvas => {
+    const imgData = canvas.toDataURL("image/png");
+    const { jsPDF } = window.jspdf;
+    
+    const pdfWidth = 210;
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: [pdfWidth, pdfHeight]
+    });
+    
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    
+    const dateStr = new Date().toISOString().slice(0,10);
+    const fileName = isAr ? `تقرير_إيقاف_البيع_${dateStr}.pdf` : `Stop_Sale_Report_${dateStr}.pdf`;
+    pdf.save(fileName);
+    
+    document.body.removeChild(reportContainer);
+  }).catch(err => {
+    console.error("PDF generation failed", err);
+    alert("Failed to export PDF. Please try again.");
     document.body.removeChild(reportContainer);
   });
 }
