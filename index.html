@@ -355,7 +355,27 @@ const DATA_URL_FALLBACK = "data/stop-sale.xlsx"; // used if folder auto-discover
 // (rate limit, network hiccup, temporary GitHub outage) the app keeps
 // showing the last successfully-found logo/slogan/workbook instead of
 // silently losing them.
+async function fetchConfigRepo(){
+  try {
+    const res = await fetch("data/config.json?v=" + Date.now(), {cache:"no-store"});
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.githubRepo){
+        const parts = data.githubRepo.split("/");
+        if(parts.length === 2) {
+          return { owner: parts[0].trim(), repo: parts[1].trim() };
+        }
+      }
+    }
+  } catch(e){}
+  return null;
+}
 async function ghRepoCoords(){
+  // 1. Try to read from data/config.json first (helps with custom domains)
+  const configCoords = await fetchConfigRepo();
+  if (configCoords) return configCoords;
+
+  // 2. Fallback to standard github.io parsing
   const host = location.hostname; // e.g. "someuser.github.io"
   if(!host.endsWith("github.io")) return null;
   const owner = host.split(".")[0];
@@ -376,7 +396,37 @@ function saveCachedAssets(assets){
   try{ localStorage.setItem(ASSET_CACHE_KEY, JSON.stringify(assets)); }catch(e){}
 }
 
+async function discoverVercelAssets(){
+  try {
+    const res = await fetch("/api/files?v=" + Date.now(), {cache:"no-store"});
+    if(res.ok){
+      const list = await res.json();
+      if(Array.isArray(list) && list.length){
+        const xlsxList = list.map(item => {
+          const filePath = typeof item === "string" ? item : (item.path || item.url || item.name);
+          const fileName = filePath.split("/").pop();
+          return { url: filePath, name: fileName, path: filePath };
+        });
+        return {
+          xlsxList,
+          logoUrl: null,
+          sloganUrl: null
+        };
+      }
+    }
+  } catch(e){}
+  return null;
+}
+
 async function discoverRepoAssets(){
+  // 1. Try Vercel dynamic API first
+  const vercelAssets = await discoverVercelAssets();
+  if (vercelAssets) {
+    console.log("Assets discovered dynamically via Vercel API");
+    return vercelAssets;
+  }
+
+  // 2. Otherwise try GitHub Repo API
   const coords = await ghRepoCoords();
   if(!coords) return loadCachedAssets();
   const {owner, repo} = coords;

@@ -1,0 +1,9 @@
+{
+  "name": "yanabea-alhuda-stop-sale-tracker",
+  "version": "1.0.0",
+  "description": "Stop Sale Tracker for Yanabea Alhuda",
+  "scripts": {
+    "dev": "vercel dev",
+    "update": "node update-manifest.js"
+  }
+}
