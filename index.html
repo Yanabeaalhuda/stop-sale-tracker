@@ -1636,6 +1636,51 @@ function getBase64Image(img) {
   }
 }
 
+const hotelColors = [
+  { text: "#6f1028", border: "#d4af62" }, // Burgundy & Gold
+  { text: "#1a365d", border: "#3182ce" }, // Navy & Blue
+  { text: "#22543d", border: "#38a169" }, // Green & Emerald
+  { text: "#5f370e", border: "#dd6b20" }, // Amber & Orange
+  { text: "#44337a", border: "#805ad5" }, // Purple & Violet
+  { text: "#1a202c", border: "#718096" }, // Slate & Grey
+  { text: "#005b41", border: "#008170" }  // Deep Teal & Teal
+];
+
+function getHotelColor(name) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % hotelColors.length;
+  return hotelColors[index];
+}
+
+function getRoomStyle(roomName) {
+  const norm = roomName.toLowerCase();
+  if (norm.includes("single") || norm.includes("sgl")) {
+    return "color: #2f855a; font-weight: 600; background: #e6fffa; border-radius: 4px; padding: 2px 6px; display: inline-block;";
+  }
+  if (norm.includes("double") || norm.includes("dbl") || norm.includes("twin")) {
+    return "color: #2b6cb0; font-weight: 600; background: #ebf8ff; border-radius: 4px; padding: 2px 6px; display: inline-block;";
+  }
+  if (norm.includes("triple") || norm.includes("trp")) {
+    return "color: #6b46c1; font-weight: 600; background: #faf5ff; border-radius: 4px; padding: 2px 6px; display: inline-block;";
+  }
+  if (norm.includes("quad")) {
+    return "color: #c05621; font-weight: 600; background: #fffaf0; border-radius: 4px; padding: 2px 6px; display: inline-block;";
+  }
+  if (norm.includes("quint")) {
+    return "color: #0d9488; font-weight: 600; background: #f0fdfa; border-radius: 4px; padding: 2px 6px; display: inline-block;";
+  }
+  if (norm.includes("suite") || norm.includes("family") || norm.includes("fam")) {
+    return "color: #9b2c2c; font-weight: 600; background: #fff5f5; border-radius: 4px; padding: 2px 6px; display: inline-block;";
+  }
+  if (norm.includes("all") || norm.includes("جميع")) {
+    return "color: #4a5568; font-weight: bold; background: #edf2f7; border-radius: 4px; padding: 2px 6px; display: inline-block;";
+  }
+  return "color: #2d3748; font-weight: 600;";
+}
+
 function exportReport(format) {
   const hotels = Object.keys(hotelData);
   if (!hotels.length) {
@@ -1862,10 +1907,15 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
         }).join(" ")
       : "—";
 
+    const hScheme = getHotelColor(item.hotel);
+    const rStyle = getRoomStyle(item.room);
+
     return `
       <tr style="${idx % 2 === 1 ? 'background: #fdfcfb;' : ''}">
-        <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; font-weight: 700; color: #202020; text-align: ${isAr ? 'right' : 'left'};">${escapeHTML(item.hotel)}</td>
-        <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; font-weight: 500; color: #404040; text-align: ${isAr ? 'right' : 'left'};">${escapeHTML(item.room)}</td>
+        <td style="border-bottom: 1px solid #f2e8dc; border-left: ${!isAr ? '4px solid ' + hScheme.border : 'none'}; border-right: ${isAr ? '4px solid ' + hScheme.border : 'none'}; padding: 14px 18px; font-size: 13px; font-weight: 700; color: ${hScheme.text}; text-align: ${isAr ? 'right' : 'left'};">${escapeHTML(item.hotel)}</td>
+        <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'};">
+          <span style="${rStyle}">${escapeHTML(item.room)}</span>
+        </td>
         <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'};">${periodChips}</td>
         <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; text-align: center;">
           <span style="display: inline-block; border-radius: 999px; padding: 5px 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; white-space: nowrap; ${statusStyle}">
@@ -2016,10 +2066,15 @@ function exportPDFReport(data, totalHotels, activeCount, upcomingCount, timestam
         }).join(" ")
       : "—";
 
+    const hScheme = getHotelColor(item.hotel);
+    const rStyle = getRoomStyle(item.room);
+
     return `
       <tr style="${idx % 2 === 1 ? 'background: #fdfcfb;' : ''}">
-        <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; font-weight: 700; color: #202020; text-align: ${isAr ? 'right' : 'left'};">${escapeHTML(item.hotel)}</td>
-        <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; font-weight: 500; color: #404040; text-align: ${isAr ? 'right' : 'left'};">${escapeHTML(item.room)}</td>
+        <td style="border-bottom: 1px solid #f2e8dc; border-left: ${!isAr ? '4px solid ' + hScheme.border : 'none'}; border-right: ${isAr ? '4px solid ' + hScheme.border : 'none'}; padding: 14px 18px; font-size: 13px; font-weight: 700; color: ${hScheme.text}; text-align: ${isAr ? 'right' : 'left'};">${escapeHTML(item.hotel)}</td>
+        <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'};">
+          <span style="${rStyle}">${escapeHTML(item.room)}</span>
+        </td>
         <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'};">${periodChips}</td>
         <td style="border-bottom: 1px solid #f2e8dc; padding: 14px 18px; font-size: 13px; text-align: center;">
           <span style="display: inline-block; border-radius: 999px; padding: 5px 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; white-space: nowrap; ${statusStyle}">
