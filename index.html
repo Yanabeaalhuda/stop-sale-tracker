@@ -2116,7 +2116,8 @@ function exportPDFReport(data, totalHotels, activeCount, upcomingCount, timestam
     allowTaint: true,
     backgroundColor: '#ffffff'
   }).then(canvas => {
-    const imgData = canvas.toDataURL("image/png");
+    // Compress the canvas output to a JPEG to significantly reduce PDF file size
+    const imgData = canvas.toDataURL("image/jpeg", 0.7);
     const { jsPDF } = window.jspdf;
     
     const pdfWidth = 210;
@@ -2128,7 +2129,8 @@ function exportPDFReport(data, totalHotels, activeCount, upcomingCount, timestam
       format: [pdfWidth, pdfHeight]
     });
     
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    // Use JPEG format in jsPDF to embed the compressed JPEG byte stream directly
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
     
     const dateStr = new Date().toISOString().slice(0,10);
     const fileName = isAr ? `تقرير_إيقاف_البيع_${dateStr}.pdf` : `Stop_Sale_Report_${dateStr}.pdf`;
