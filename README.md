@@ -1,4 +1,8 @@
-# Yanabea Alhuda — Stop Sale Tracker
+# Yanabea Alhuda — Hotel Availability & Stop Sale Tracker
+
+The tracker recognizes both red stop-sale cells and room labels containing
+`(Subject to hotel availability)`. Conditional-availability dates appear as a
+separate teal status; a red stop-sale cell always takes priority for that date.
 
 ## How to use this on GitHub Pages
 

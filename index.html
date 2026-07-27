@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Yanabea Alhuda | Stop Sale Tracker</title>
+<title>Yanabea Alhuda | Hotel Availability & Stop Sale Tracker</title>
 <script src="files/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -85,10 +85,12 @@
   .range-chip{display:inline-block;background:#fdeceb;color:var(--burgundy);border:1px solid rgba(176,0,32,.25);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:bold;margin:2px 4px 2px 0}
   .range-chip.upcoming{background:#fff4e0;border-color:rgba(181,106,0,.3)}
   .range-chip.waiting{background:#e6f7f4;border-color:rgba(15,118,110,.3);color:#0f766e}
+  .range-chip.subject{background:#e6f7f4;border-color:rgba(15,118,110,.3);color:#0f766e}
   .status-pill{font-size:11px;font-weight:bold;border-radius:999px;padding:4px 9px;display:inline-block;white-space:nowrap}
   .status-pill.active{background:var(--red);color:#fff}
   .status-pill.upcoming{background:var(--orange);color:#fff}
   .status-pill.waiting{background:#0f766e;color:#fff}
+  .status-pill.subject{background:#0f766e;color:#fff}
   .empty-state{padding:40px 20px;text-align:center;color:var(--muted)}
   .empty-state .big{font-size:40px;margin-bottom:10px}
   .footer{color:var(--burgundy);font-size:14px;font-weight:bold;letter-spacing:.5px;text-align:center;margin:18px}
@@ -112,15 +114,20 @@
   .cal-day.stop{background:#fdeceb}
   .cal-day.stop::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--red)}
   .cal-day.stop .dnum{color:var(--red)}
+  .cal-day.subject{background:#e6f7f4}
+  .cal-day.subject::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#0f766e}
+  .cal-day.subject .dnum{color:#0f766e}
   .cal-day.open .status-dot{background:var(--green)}
   .cal-day.stop .status-dot{background:var(--red)}
   .cal-day .cal-tags{margin-top:auto;display:flex;flex-wrap:wrap;gap:3px}
   .cal-day .cal-tag{font-size:10px;font-weight:bold;border-radius:999px;padding:2px 6px;display:inline-flex;align-items:center}
   .cal-day.stop .cal-tag{background:var(--red);color:#fff}
+  .cal-day.subject .cal-tag{background:#0f766e;color:#fff}
   .cal-day .cal-tag.more{background:#f0d9db;color:var(--burgundy)}
   select:disabled{background:#f2f0ec;color:#aaa;cursor:not-allowed}
   .cal-day.past{opacity:.45}
   .cal-day.past.stop::before{background:#c98891}
+  .cal-day.past.subject::before{background:#78aaa5}
   .cal-day:hover:not(.empty){box-shadow:inset 0 0 0 2px var(--gold);z-index:2}
   .cal-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-size:12.5px;color:var(--muted);align-items:center}
   .cal-legend .swatch{width:13px;height:13px;border-radius:4px;display:inline-block;margin-right:6px;vertical-align:middle}
@@ -140,6 +147,7 @@
   .modal-sec-title{font-weight:bold;color:var(--burgundy);font-size:15px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
   .modal-room-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
   .modal-room-chip{background:#fdeceb;color:var(--red);border:1px solid rgba(176,0,32,.25);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:bold}
+  .modal-room-chip.subject{background:#e6f7f4;color:#0f766e;border-color:rgba(15,118,110,.3)}
   .modal-open-card{background:#eafaf0;border:1px solid rgba(8,122,54,.3);color:var(--green);padding:24px;border-radius:16px;text-align:center;font-weight:bold;font-size:16px}
 
   /* Responsive Design Across PC, Tablet, & Mobile */
@@ -184,8 +192,8 @@
     <div class="brand">
       <img id="brandLogo" src="files/LOGO.png" alt="Yanabea Alhuda Logo" onerror="this.style.display='none'">
       <div>
-        <h1 data-i18n="title">Yanabea Alhuda Stop Sale Tracker</h1>
-        <p class="tag" data-i18n="tag">See stop-sale dates for every hotel, instantly</p>
+        <h1 data-i18n="title">Yanabea Alhuda Hotel Availability &amp; Stop Sale Tracker</h1>
+        <p class="tag" data-i18n="tag">See hotel availability conditions and stop-sale dates instantly</p>
       </div>
     </div>
     <div class="slogan" data-i18n="slogan">Peaceful Stay... for a Blessed Journey</div>
@@ -252,9 +260,10 @@
       <div class="cal-dow-row" id="calDow"></div>
       <div class="cal-grid" id="calGrid"></div>
     </div>
-    <div class="cal-hint" id="calHint" data-i18n="calHint">Tip: hover over a stop-sale day to see which room types are affected.</div>
+    <div class="cal-hint" id="calHint" data-i18n="calHint">Tip: hover over a day to see stop-sale and hotel-availability details.</div>
     <div class="cal-legend">
       <span><span class="swatch" style="background:var(--red)"></span><span data-i18n="legendStop">Stop Sale</span></span>
+      <span><span class="swatch" style="background:#0f766e"></span><span data-i18n="legendSubject">Subject to Hotel Availability</span></span>
       <span><span class="swatch" style="background:#fff;border:1px solid var(--border)"></span><span data-i18n="legendOpen">Open to Sale</span></span>
       <span><span class="swatch" style="background:#faf7f2;border:1px solid var(--border)"></span><span data-i18n="legendPast">Past date</span></span>
       <span><span class="swatch" style="background:var(--gold)"></span><span data-i18n="legendToday">Today</span></span>
@@ -262,7 +271,7 @@
   </section>
   <section class="card">
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
-      <h2 style="margin:0;" data-i18n="resultsTitle">Stop Sale Results</h2>
+      <h2 style="margin:0;" data-i18n="resultsTitle">Availability &amp; Stop Sale Results</h2>
       <div style="display:flex; gap:10px;" class="export-actions">
         <button type="button" id="exportExcelBtn" onclick="exportReport('excel')" style="background:#087a36; color:#fff; border-radius:10px; padding:8px 14px; font-weight:bold; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px; border:0; line-height:1.2; box-shadow:0 2px 5px rgba(0,0,0,0.1); transition:opacity 0.15s ease;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
           <span style="font-size:14px; line-height:1;">📊</span> <span data-i18n="exportExcel">Export Excel</span>
@@ -281,7 +290,7 @@
     <div class="toggles">
       <label>
         <input id="onlyAffected" type="checkbox" checked onchange="render()">
-        <span data-i18n="onlyAffected">Show only hotels with stop-sale dates</span>
+        <span data-i18n="onlyAffected">Show only hotels with stop-sale or availability conditions</span>
       </label>
       <label>
         <input id="expandAll" type="checkbox" checked onchange="toggleExpandAll()">
@@ -696,15 +705,17 @@ function applyBrandAssets(assets){
   }
 }
 
-// hotelData[hotel][roomKey] = { display, dayNumbers:Set }
+// hotelData[hotel][roomKey] = { display, dayNumbers:Set, availabilityDayNumbers:Set }
+// dayNumbers are stop-sale days. availabilityDayNumbers are non-stop dates
+// whose room label says "Subject to hotel availability".
 let hotelData = {};
 let isManualPreview = false;
 let manualFileNames = [];
 
 const t = {
   en:{
-    title:"Yanabea Alhuda Stop Sale Tracker",
-    tag:"See stop-sale dates for every hotel, instantly",
+    title:"Yanabea Alhuda Hotel Availability & Stop Sale Tracker",
+    tag:"See hotel availability conditions and stop-sale dates instantly",
     slogan:"Peaceful Stay... for a Blessed Journey",
     totalHotels:"Hotels Loaded",activeStops:"Active Stop Sales",upcomingStops:"Upcoming Stop Sales",dataStatus:"Data Status",
     loading:"Loading",ready:"Ready",error:"Error",noFile:"No data yet",
@@ -720,19 +731,19 @@ const t = {
     clearFiles:"Clear preview &amp; reload from GitHub",
     calendarTitle:"Calendar View",
     hotelLabel:"Hotel",roomLabel:"Room Type",todayBtn:"Today",
-    legendStop:"Stop Sale",legendOpen:"Open to Sale",legendPast:"Past date",legendToday:"Today",
-    noCalData:"Upload or load stop-sale data to see the calendar.",
-    calHint:"Tip: hover over a stop-sale day to see which room types are affected.",
+    legendStop:"Stop Sale",legendSubject:"Subject to Hotel Availability",legendOpen:"Open to Sale",legendPast:"Past date",legendToday:"Today",
+    noCalData:"Upload or load availability data to see the calendar.",
+    calHint:"Tip: hover over a day to see stop-sale and hotel-availability details.",
     allHotels:"All Hotels",
     allRoomTypes:"All Room Types",
     roomWord:"room",roomsWord:"rooms",
-    resultsTitle:"Stop Sale Results",
+    resultsTitle:"Availability & Stop Sale Results",
     searchPh:"Search hotel name...",
-    onlyAffected:"Show only hotels with stop-sale dates",
+    onlyAffected:"Show only hotels with stop-sale or availability conditions",
     expandAll:"Expand all hotels",
-    roomType:"Room Type",stopPeriods:"Stop Sale Period(s)",status:"Status",
-    active:"Active now",upcoming:"Upcoming",
-    noStopSale:"No stop-sale dates",
+    roomType:"Room Type",stopPeriods:"Availability / Stop Sale Period(s)",status:"Status",
+    active:"Active Stop Sale",upcoming:"Upcoming Stop Sale",subjectAvailability:"Subject to Hotel Availability",
+    noStopSale:"No stop-sale or availability conditions",
     noHotels:"No hotels found yet.",
     noMatch:"No hotels match your search / filters.",
     asOf:"Showing stop-sale dates from",
@@ -748,8 +759,8 @@ const t = {
     waitingList:"Waiting List"
   },
   ar:{
-    title:"متابعة تواريخ إيقاف البيع - ينابيع الهدى",
-    tag:"تعرف على تواريخ إيقاف البيع لكل فندق فوراً",
+    title:"متابعة إتاحة الفنادق وإيقاف البيع - ينابيع الهدى",
+    tag:"تعرف على شروط إتاحة الفنادق وتواريخ إيقاف البيع فوراً",
     slogan:"سكن مطمئن... لرحلة مباركة",
     totalHotels:"الفنادق المحمّلة",activeStops:"إيقاف بيع فعّال الآن",upcomingStops:"إيقاف بيع قادم",dataStatus:"حالة البيانات",
     loading:"جاري التحميل",ready:"جاهز",error:"خطأ",noFile:"لا توجد بيانات بعد",
@@ -765,19 +776,19 @@ const t = {
     clearFiles:"إزالة المعاينة والتحميل من GitHub",
     calendarTitle:"عرض التقويم",
     hotelLabel:"الفندق",roomLabel:"نوع الغرفة",todayBtn:"اليوم",
-    legendStop:"إيقاف بيع",legendOpen:"متاح للبيع",legendPast:"تاريخ ماضي",legendToday:"اليوم",
-    noCalData:"قم برفع أو تحميل بيانات إيقاف البيع لعرض التقويم.",
-    calHint:"تلميح: مرّر الفأرة فوق يوم إيقاف البيع لمعرفة أنواع الغرف المتأثرة.",
+    legendStop:"إيقاف بيع",legendSubject:"خاضع لتوافر الفندق",legendOpen:"متاح للبيع",legendPast:"تاريخ ماضي",legendToday:"اليوم",
+    noCalData:"قم برفع أو تحميل بيانات الإتاحة وإيقاف البيع لعرض التقويم.",
+    calHint:"تلميح: مرّر الفأرة فوق أي يوم لمعرفة تفاصيل الإتاحة وإيقاف البيع.",
     allHotels:"جميع الفنادق",
     allRoomTypes:"جميع أنواع الغرف",
     roomWord:"غرفة",roomsWord:"غرف",
-    resultsTitle:"نتائج إيقاف البيع",
+    resultsTitle:"نتائج الإتاحة وإيقاف البيع",
     searchPh:"ابحث باسم الفندق...",
-    onlyAffected:"إظهار الفنادق التي يوجد بها إيقاف بيع فقط",
+    onlyAffected:"إظهار الفنادق التي بها إيقاف بيع أو شروط إتاحة فقط",
     expandAll:"فتح جميع الفنادق",
-    roomType:"نوع الغرفة",stopPeriods:"فترات إيقاف البيع",status:"الحالة",
-    active:"فعّال الآن",upcoming:"قادم",
-    noStopSale:"لا يوجد إيقاف بيع",
+    roomType:"نوع الغرفة",stopPeriods:"فترات الإتاحة / إيقاف البيع",status:"الحالة",
+    active:"إيقاف بيع فعّال",upcoming:"إيقاف بيع قادم",subjectAvailability:"خاضع لتوافر الفندق",
+    noStopSale:"لا يوجد إيقاف بيع أو شروط إتاحة",
     noHotels:"لا توجد فنادق حتى الآن.",
     noMatch:"لا توجد فنادق تطابق البحث / الفلاتر.",
     asOf:"يتم عرض تواريخ إيقاف البيع من",
@@ -796,7 +807,7 @@ const t = {
 
 function setLang(lang){
   currentLang=lang;localStorage.setItem("lang_stopsale",lang);
-  document.title = t[lang].title || "Stop Sale Tracker";
+  document.title = t[lang].title || "Hotel Availability & Stop Sale Tracker";
   document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";document.body.dir=document.documentElement.dir;
   enBtn.classList.toggle("active",lang==="en");arBtn.classList.toggle("active",lang==="ar");
   document.querySelectorAll("[data-i18n]").forEach(el=>{if(t[lang][el.dataset.i18n]) el.innerHTML=t[lang][el.dataset.i18n]});
@@ -822,7 +833,10 @@ function isRedFill(cell){
   if(rgb === "FF0000" || rgb === "FFFF0000" || rgb === "C00000" || rgb === "FFC00000" || rgb === "E60000" || rgb === "CC0000" || rgb === "B00020") return true;
   return false;
 }
-const LEGEND_LABELS = ["open to sale","white","stop sale","red","limited availability"];
+const LEGEND_LABELS = [
+  "open to sale","white","stop sale","red","limited availability",
+  "subject to hotel availability","subject to availability"
+];
 
 function cleanHotelName(val){
   if(!val) return "";
@@ -851,6 +865,16 @@ function canonicalRoomKey(room){
     .replace(/\(subject to availability\)/g,"")
     .trim();
 }
+function displayRoomName(room){
+  return String(room || "")
+    .replace(/\s*\(subject to hotel availability\)\s*/gi," ")
+    .replace(/\s*\(subject to availability\)\s*/gi," ")
+    .replace(/\s+/g," ")
+    .trim();
+}
+function isSubjectToHotelAvailability(room){
+  return /\(\s*subject to (?:hotel )?availability\s*\)/i.test(String(room || ""));
+}
 function isAllRoomsLabel(room){
   const n = normalize(room);
   return n.startsWith("all rm") || n.startsWith("all room");
@@ -865,14 +889,36 @@ function addStopDay(hotel, roomRaw, dayNum){
   const key = isAllRoomsLabel(roomRaw) ? "__ALL__" : canonicalRoomKey(roomRaw);
   if(!hotelData[hotel]) hotelData[hotel] = {};
   if(!hotelData[hotel][key]){
-    hotelData[hotel][key] = { display: isAllRoomsLabel(roomRaw) ? null : roomRaw.trim(), dayNumbers: new Set() };
+    hotelData[hotel][key] = {
+      display: isAllRoomsLabel(roomRaw) ? null : displayRoomName(roomRaw),
+      dayNumbers: new Set(),
+      availabilityDayNumbers: new Set()
+    };
   }
   // prefer the shortest / no-suffix display variant we've seen
   if(!isAllRoomsLabel(roomRaw)){
     const cur = hotelData[hotel][key].display;
-    if(!cur || roomRaw.trim().length < cur.length) hotelData[hotel][key].display = roomRaw.trim();
+    const cleanDisplay = displayRoomName(roomRaw);
+    if(!cur || cleanDisplay.length < cur.length) hotelData[hotel][key].display = cleanDisplay;
   }
   hotelData[hotel][key].dayNumbers.add(dayNum);
+  hotelData[hotel][key].availabilityDayNumbers.delete(dayNum);
+}
+
+function addAvailabilityDay(hotel, roomRaw, dayNum){
+  hotel = cleanHotelName(hotel);
+  const key = isAllRoomsLabel(roomRaw) ? "__ALL__" : canonicalRoomKey(roomRaw);
+  if(!hotelData[hotel]) hotelData[hotel] = {};
+  if(!hotelData[hotel][key]){
+    hotelData[hotel][key] = {
+      display: isAllRoomsLabel(roomRaw) ? null : displayRoomName(roomRaw),
+      dayNumbers: new Set(),
+      availabilityDayNumbers: new Set()
+    };
+  }
+  if(!hotelData[hotel][key].dayNumbers.has(dayNum)){
+    hotelData[hotel][key].availabilityDayNumbers.add(dayNum);
+  }
 }
 
 function parseDateString(str) {
@@ -970,11 +1016,14 @@ function parseWorkbook(wb, fileLabel, stats){
       if(!Object.keys(dayByCol).length) continue;
 
       const roomName = aVal;
+      const subjectToAvailability = isSubjectToHotelAvailability(roomName);
       Object.keys(dayByCol).forEach(colStr=>{
         const C = Number(colStr);
         const cell = ws[XLSX.utils.encode_cell({r:R,c:C})];
         if(isRedFill(cell)){
           addStopDay(targetHotel, roomName, dayByCol[colStr]);
+        } else if(subjectToAvailability){
+          addAvailabilityDay(targetHotel, roomName, dayByCol[colStr]);
         }
       });
     }
@@ -987,19 +1036,27 @@ function parseWorkbook(wb, fileLabel, stats){
    ============================================================ */
 function buildRanges(){
   const out = {};
+  const toRanges = (days, kind) => {
+    const ranges = [];
+    let start=null,prev=null;
+    days.forEach(d=>{
+      if(start===null){ start=d; prev=d; return; }
+      if(d - prev === 1){ prev = d; }
+      else { ranges.push({start,end:prev,kind}); start=d; prev=d; }
+    });
+    if(start!==null) ranges.push({start,end:prev,kind});
+    return ranges;
+  };
   Object.keys(hotelData).forEach(hotel=>{
     out[hotel] = {};
     Object.keys(hotelData[hotel]).forEach(key=>{
       const entry = hotelData[hotel][key];
-      const days = [...effectiveDayNumbers(hotel, key)].filter(d=>d >= today).sort((a,b)=>a-b);
-      const ranges = [];
-      let start=null,prev=null;
-      days.forEach(d=>{
-        if(start===null){ start=d; prev=d; return; }
-        if(d - prev === 1){ prev = d; }
-        else { ranges.push({start,end:prev}); start=d; prev=d; }
-      });
-      if(start!==null) ranges.push({start,end:prev});
+      const stopDays = [...effectiveDayNumbers(hotel, key)].filter(d=>d >= today).sort((a,b)=>a-b);
+      const availabilityDays = [...effectiveAvailabilityDayNumbers(hotel, key)].filter(d=>d >= today).sort((a,b)=>a-b);
+      const ranges = [
+        ...toRanges(stopDays, "stop"),
+        ...toRanges(availabilityDays, "subject")
+      ].sort((a,b)=>a.start-b.start || (a.kind === "stop" ? -1 : 1));
       if(ranges.length){
         out[hotel][key] = {
           display: key==="__ALL__" ? t[currentLang].allRoomTypes : entry.display,
@@ -1197,6 +1254,15 @@ function computeAllHotelsDayMap(){
   });
   return map;
 }
+function computeAllHotelsAvailabilityDayMap(){
+  const map = {};
+  Object.keys(hotelData).forEach(hotel=>{
+    hotelAvailabilityDayNumbers(hotel).forEach(d=>{
+      (map[d] || (map[d]=[])).push(hotel);
+    });
+  });
+  return map;
+}
 
 function buildTagsHtml(labels){
   const MAX_SHOWN = 3;
@@ -1230,12 +1296,15 @@ function renderCalendar(){
   // "All Room Types" means ANY room is stopped that day (union across every
   // room, folding in All-Room-Types marks too) — not just the literal
   // "All RM Types" row, which may be blank even when individual rooms aren't.
-  let dayNumbers, allHotelsMap = null;
+  let stopDayNumbers, availabilityDayNumbers, allHotelsMap = null, allHotelsAvailabilityMap = null;
   if(isAllHotelsView){
     allHotelsMap = computeAllHotelsDayMap();
-    dayNumbers = new Set(Object.keys(allHotelsMap).map(Number));
+    allHotelsAvailabilityMap = computeAllHotelsAvailabilityDayMap();
+    stopDayNumbers = new Set(Object.keys(allHotelsMap).map(Number));
+    availabilityDayNumbers = new Set(Object.keys(allHotelsAvailabilityMap).map(Number));
   } else {
-    dayNumbers = isAllRoomsView ? hotelUnionDayNumbers(hotel) : effectiveDayNumbers(hotel, roomKey);
+    stopDayNumbers = isAllRoomsView ? hotelUnionDayNumbers(hotel) : effectiveDayNumbers(hotel, roomKey);
+    availabilityDayNumbers = isAllRoomsView ? hotelAvailabilityDayNumbers(hotel) : effectiveAvailabilityDayNumbers(hotel, roomKey);
   }
 
   const firstOfMonthUTC = Date.UTC(calYear, calMonth, 1);
@@ -1247,10 +1316,11 @@ function renderCalendar(){
   for(let i=0;i<firstWeekday;i++) cells.push(`<div class="cal-day empty"></div>`);
   for(let day=1; day<=daysInMonth; day++){
     const dNum = firstDayNum + (day-1);
-    const isStop = dayNumbers.has(dNum);
+    const isStop = stopDayNumbers.has(dNum);
+    const isSubject = !isStop && availabilityDayNumbers.has(dNum);
     const isPast = dNum < today;
     const isToday = dNum === today;
-    const cls = ["cal-day", isStop?"stop":"open", isPast?"past":"", isToday?"today":""].filter(Boolean).join(" ");
+    const cls = ["cal-day", isStop?"stop":isSubject?"subject":"open", isPast?"past":"", isToday?"today":""].filter(Boolean).join(" ");
 
     let tagsHtml = "";
     let titleAttr = "";
@@ -1271,6 +1341,18 @@ function renderCalendar(){
         titleAttr = escapeHTML(names.join(", "));
       } else {
         tagsHtml = `<div class="cal-tags"><span class="cal-tag">${t[currentLang].legendStop}</span></div>`;
+      }
+    } else if(isSubject){
+      if(isAllHotelsView){
+        const hotelsHere = (allHotelsAvailabilityMap[dNum] || []).sort((a,b)=>a.localeCompare(b));
+        tagsHtml = `<div class="cal-tags">${buildTagsHtml(hotelsHere.map(abbreviateHotelName))}</div>`;
+        titleAttr = escapeHTML(hotelsHere.map(h=>`${h} — ${t[currentLang].subjectAvailability}`).join(", "));
+      } else if(isAllRoomsView){
+        const names = hotelRoomsSubjectOnDay(hotel, dNum);
+        tagsHtml = `<div class="cal-tags">${buildTagsHtml(names.map(abbreviateRoomName))}</div>`;
+        titleAttr = escapeHTML(names.map(r=>`${r} — ${t[currentLang].subjectAvailability}`).join(", "));
+      } else {
+        tagsHtml = `<div class="cal-tags"><span class="cal-tag">${t[currentLang].subjectAvailability}</span></div>`;
       }
     }
     cells.push(`<div class="${cls}" tabindex="0" role="button" aria-label="${day} ${calMonthLabel.innerText}" onclick="openDateModal(${dNum})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDateModal(${dNum});}" ${titleAttr?`title="${titleAttr}"`:""}><span class="dnum">${day}</span>${tagsHtml}</div>`);
@@ -1298,48 +1380,50 @@ function openDateModal(dNum){
 
   if(isAllHotels){
     const hotelKeys = Object.keys(hotelData).sort((a,b)=>a.localeCompare(b));
-    let stoppedCount = 0;
+    let affectedCount = 0;
     
     hotelKeys.forEach(hotel => {
       const rooms = hotelRoomsStoppedOnDay(hotel, dNum);
+      const subjectRooms = hotelRoomsSubjectOnDay(hotel, dNum);
       const isUnionStop = hotelUnionDayNumbers(hotel).has(dNum);
       
-      if(isUnionStop || rooms.length){
-        stoppedCount++;
+      if(isUnionStop || rooms.length || subjectRooms.length){
+        affectedCount++;
         const displayRooms = rooms.length ? rooms : [t[currentLang].allRoomTypes];
+        const hasStop = isUnionStop || rooms.length;
         html += `
           <div class="modal-sec">
             <div class="modal-sec-title">
               <span>🏢 ${escapeHTML(hotel)}</span>
-              <span class="status-pill active">${t[currentLang].active}</span>
+              <span class="status-pill ${hasStop?'active':'subject'}">${hasStop?t[currentLang].active:t[currentLang].subjectAvailability}</span>
             </div>
-            <div class="modal-room-list">
-              ${displayRooms.map(r => `<span class="modal-room-chip">${escapeHTML(r)}</span>`).join("")}
-            </div>
+            ${hasStop ? `<div class="modal-room-list">${displayRooms.map(r => `<span class="modal-room-chip">${escapeHTML(r)} — ${t[currentLang].legendStop}</span>`).join("")}</div>` : ""}
+            ${subjectRooms.length ? `<div class="modal-room-list">${subjectRooms.map(r => `<span class="modal-room-chip subject">${escapeHTML(r)} — ${t[currentLang].subjectAvailability}</span>`).join("")}</div>` : ""}
           </div>
         `;
       }
     });
 
-    if(stoppedCount === 0){
+    if(affectedCount === 0){
       html = `<div class="modal-open-card">✅ ${currentLang==='ar'?'جميع الفنادق متاحة للبيع في هذا اليوم':'All hotels are open to sale on this date.'}</div>`;
     }
   } else {
     const hotel = selectedHotel;
     const rooms = hotelRoomsStoppedOnDay(hotel, dNum);
+    const subjectRooms = hotelRoomsSubjectOnDay(hotel, dNum);
     const isUnionStop = hotelUnionDayNumbers(hotel).has(dNum);
 
-    if(isUnionStop || rooms.length){
+    if(isUnionStop || rooms.length || subjectRooms.length){
       const displayRooms = rooms.length ? rooms : [t[currentLang].allRoomTypes];
+      const hasStop = isUnionStop || rooms.length;
       html = `
         <div class="modal-sec">
           <div class="modal-sec-title">
             <span>🏢 ${escapeHTML(hotel)}</span>
-            <span class="status-pill active">${t[currentLang].active}</span>
+            <span class="status-pill ${hasStop?'active':'subject'}">${hasStop?t[currentLang].active:t[currentLang].subjectAvailability}</span>
           </div>
-          <div class="modal-room-list">
-            ${displayRooms.map(r => `<span class="modal-room-chip">${escapeHTML(r)}</span>`).join("")}
-          </div>
+          ${hasStop ? `<div class="modal-room-list">${displayRooms.map(r => `<span class="modal-room-chip">${escapeHTML(r)} — ${t[currentLang].legendStop}</span>`).join("")}</div>` : ""}
+          ${subjectRooms.length ? `<div class="modal-room-list">${subjectRooms.map(r => `<span class="modal-room-chip subject">${escapeHTML(r)} — ${t[currentLang].subjectAvailability}</span>`).join("")}</div>` : ""}
         </div>
       `;
     } else {
@@ -1411,11 +1495,25 @@ function effectiveDayNumbers(hotel, roomKey){
   allRooms.forEach(d=>merged.add(d));
   return merged;
 }
+function effectiveAvailabilityDayNumbers(hotel, roomKey){
+  const rooms = hotelData[hotel];
+  if(!rooms || !rooms[roomKey]) return new Set();
+  const subjectDays = new Set(rooms[roomKey].availabilityDayNumbers || []);
+  effectiveDayNumbers(hotel, roomKey).forEach(d=>subjectDays.delete(d));
+  return subjectDays;
+}
 function hotelUnionDayNumbers(hotel){
   const rooms = hotelData[hotel];
   const merged = new Set();
   if(!rooms) return merged;
   Object.keys(rooms).forEach(key=> effectiveDayNumbers(hotel, key).forEach(d=>merged.add(d)));
+  return merged;
+}
+function hotelAvailabilityDayNumbers(hotel){
+  const rooms = hotelData[hotel];
+  const merged = new Set();
+  if(!rooms) return merged;
+  Object.keys(rooms).forEach(key=> effectiveAvailabilityDayNumbers(hotel, key).forEach(d=>merged.add(d)));
   return merged;
 }
 function hotelRoomsStoppedOnDay(hotel, dayNum){
@@ -1425,6 +1523,16 @@ function hotelRoomsStoppedOnDay(hotel, dayNum){
   Object.keys(rooms).forEach(key=>{
     if(key === "__ALL__") return;
     if(effectiveDayNumbers(hotel, key).has(dayNum)) names.push(rooms[key].display || key);
+  });
+  return names;
+}
+function hotelRoomsSubjectOnDay(hotel, dayNum){
+  const rooms = hotelData[hotel];
+  const names = [];
+  if(!rooms) return names;
+  Object.keys(rooms).forEach(key=>{
+    if(key === "__ALL__") return;
+    if(effectiveAvailabilityDayNumbers(hotel, key).has(dayNum)) names.push(rooms[key].display || key);
   });
   return names;
 }
@@ -1498,6 +1606,9 @@ function escapeHTML(v){return String(v||"").replace(/[&<>"']/g,m=>({"&":"&amp;",
 function hashCode(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h<<5)-h+s.charCodeAt(i); h|=0; } return h; }
 
 function getRangeStatus(r) {
+  if (r.kind === 'subject') {
+    return 'subject';
+  }
   if (r.start <= today) {
     return 'active';
   }
@@ -1508,13 +1619,16 @@ function getOverallStatus(ranges) {
   if (!ranges || !ranges.length) return 'clear';
   let hasActive = false;
   let hasUpcoming = false;
+  let hasSubject = false;
   ranges.forEach(r => {
     const status = getRangeStatus(r);
     if (status === 'active') hasActive = true;
     else if (status === 'upcoming') hasUpcoming = true;
+    else if (status === 'subject') hasSubject = true;
   });
   if (hasActive) return 'active';
   if (hasUpcoming) return 'upcoming';
+  if (hasSubject) return 'subject';
   return 'clear';
 }
 
@@ -1530,12 +1644,12 @@ function render(){
   hotelNames.forEach(hotel=>{
     const rooms = ranges[hotel];
     const roomKeys = Object.keys(rooms);
-    const hasAnyStop = roomKeys.length > 0;
+    const hasAnyCondition = roomKeys.length > 0;
 
     if(query && !normalize(hotel).includes(query)) return;
-    if(onlyAffectedFlag && !hasAnyStop) return;
+    if(onlyAffectedFlag && !hasAnyCondition) return;
 
-    let hotelStatus = 'clear'; // 'active', 'upcoming', 'clear'
+    let hotelStatus = 'clear'; // 'active', 'upcoming', 'subject', 'clear'
     const rows = roomKeys.map(key=>{
       const room = rooms[key];
       const chips = room.ranges.map(r=>{
@@ -1543,28 +1657,31 @@ function render(){
         if(status === 'active') { activeCount++; }
         else if(status === 'upcoming') { upcomingCount++; }
         const label = (r.start===r.end) ? fmtDayNumber(r.start) : `${fmtDayNumber(r.start)} → ${fmtDayNumber(r.end)}`;
-        return `<span class="range-chip ${status}">${label}</span>`;
+        const prefix = status === 'subject' ? t[currentLang].subjectAvailability : t[currentLang].legendStop;
+        return `<span class="range-chip ${status}">${prefix}: ${label}</span>`;
       }).join(" ");
       
       const overallRoomStatus = getOverallStatus(room.ranges);
       if(overallRoomStatus === 'active') hotelStatus = 'active';
       else if(overallRoomStatus === 'upcoming' && hotelStatus !== 'active') hotelStatus = 'upcoming';
+      else if(overallRoomStatus === 'subject' && hotelStatus === 'clear') hotelStatus = 'subject';
 
       const pill = `<span class="status-pill ${overallRoomStatus}">
-        ${overallRoomStatus === 'active' ? t[currentLang].active : t[currentLang].upcoming}
+        ${overallRoomStatus === 'active' ? t[currentLang].active : overallRoomStatus === 'upcoming' ? t[currentLang].upcoming : t[currentLang].subjectAvailability}
       </span>`;
       return `<tr><td>${escapeHTML(room.display)}</td><td>${chips}</td><td>${pill}</td></tr>`;
     }).join("");
 
     const key = hotel.replace(/[^a-zA-Z0-9]/g,"_")+"_"+Math.abs(hashCode(hotel));
     let badge = `<span class="badge clear">${t[currentLang].noStopSale}</span>`;
-    if(hasAnyStop){
+    if(hasAnyCondition){
       if(hotelStatus === 'active') badge = `<span class="badge active">${t[currentLang].active}</span>`;
       else if(hotelStatus === 'upcoming') badge = `<span class="badge upcoming">${t[currentLang].upcoming}</span>`;
+      else if(hotelStatus === 'subject') badge = `<span class="badge waiting">${t[currentLang].subjectAvailability}</span>`;
     }
-    const countBadge = hasAnyStop ? `<span class="badge count">${roomKeys.length}</span>` : "";
+    const countBadge = hasAnyCondition ? `<span class="badge count">${roomKeys.length}</span>` : "";
 
-    const tableOrEmpty = hasAnyStop
+    const tableOrEmpty = hasAnyCondition
       ? `<div class="table-wrap"><table>
           <tr><th>${t[currentLang].roomType}</th><th>${t[currentLang].stopPeriods}</th><th>${t[currentLang].status}</th></tr>
           ${rows}
@@ -1701,10 +1818,10 @@ function exportReport(format) {
   hotelNames.forEach(hotel => {
     const rooms = ranges[hotel];
     const roomKeys = Object.keys(rooms);
-    const hasAnyStop = roomKeys.length > 0;
+    const hasAnyCondition = roomKeys.length > 0;
 
     if (query && !normalize(hotel).includes(query)) return;
-    if (onlyAffectedFlag && !hasAnyStop) return;
+    if (onlyAffectedFlag && !hasAnyCondition) return;
 
     if (roomKeys.length === 0) {
       filteredData.push({
@@ -1720,11 +1837,16 @@ function exportReport(format) {
         const roomRanges = room.ranges.map(r => {
           const text = (r.start === r.end) ? fmtDayNumber(r.start) : `${fmtDayNumber(r.start)} → ${fmtDayNumber(r.end)}`;
           const status = getRangeStatus(r);
-          return { start: r.start, end: r.end, text: text, status: status };
+          const prefix = status === 'subject' ? t[currentLang].subjectAvailability : t[currentLang].legendStop;
+          return { start: r.start, end: r.end, text: `${prefix}: ${text}`, status: status };
         });
         
         const overallRoomStatus = getOverallStatus(room.ranges);
-        const statusText = overallRoomStatus === 'active' ? t[currentLang].active : t[currentLang].upcoming;
+        const statusText = overallRoomStatus === 'active'
+          ? t[currentLang].active
+          : overallRoomStatus === 'upcoming'
+            ? t[currentLang].upcoming
+            : t[currentLang].subjectAvailability;
 
         filteredData.push({
           hotel: hotel,
@@ -1751,7 +1873,7 @@ function exportReport(format) {
 function exportExcelReport(data, totalHotels, activeCount, upcomingCount, timestamp) {
   const isAr = currentLang === 'ar';
   
-  const title = isAr ? "ينابيع الهدى - تقرير تواريخ إيقاف البيع" : "Yanabea Alhuda - Stop Sale Tracker Report";
+  const title = isAr ? "ينابيع الهدى - تقرير الإتاحة وإيقاف البيع" : "Yanabea Alhuda - Availability & Stop Sale Report";
   
   const summaryHeaders = isAr 
     ? ["إجمالي الفنادق", "إيقاف فعال الآن", "إيقاف بيع قادم"]
@@ -1764,8 +1886,8 @@ function exportExcelReport(data, totalHotels, activeCount, upcomingCount, timest
   ];
   
   const dataHeaders = isAr 
-    ? ["اسم الفندق", "نوع الغرفة", "فترات إيقاف البيع", "الحالة"]
-    : ["Hotel Name", "Room Type", "Stop Sale Period(s)", "Status"];
+    ? ["اسم الفندق", "نوع الغرفة", "فترات الإتاحة / إيقاف البيع", "الحالة"]
+    : ["Hotel Name", "Room Type", "Availability / Stop Sale Period(s)", "Status"];
 
   const aoa = [
     [title], // Row 1: Merged Title
@@ -1801,11 +1923,11 @@ function exportExcelReport(data, totalHotels, activeCount, upcomingCount, timest
   ws['!views'] = [{ showGridLines: true }];
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Stop Sales");
+  XLSX.utils.book_append_sheet(wb, ws, "Availability");
 
   const fileName = isAr 
-    ? `تقرير_إيقاف_البيع_${new Date().toISOString().slice(0,10)}.xlsx`
-    : `Stop_Sale_Report_${new Date().toISOString().slice(0,10)}.xlsx`;
+    ? `تقرير_الإتاحة_وإيقاف_البيع_${new Date().toISOString().slice(0,10)}.xlsx`
+    : `Availability_Stop_Sale_Report_${new Date().toISOString().slice(0,10)}.xlsx`;
 
   XLSX.writeFile(wb, fileName);
 }
@@ -1835,7 +1957,7 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
         ${logoSrc ? `<img src="${logoSrc}" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid #d4af62; object-fit: cover;" />` : ''}
         <div>
           <h1 style="margin: 0; color: #6f1028; font-size: 24px; font-weight: bold; letter-spacing: 0.3px;">
-            ${isAr ? "متابعة تواريخ إيقاف البيع - ينابيع الهدى" : "Yanabea Alhuda Stop Sale Tracker"}
+            ${isAr ? "متابعة الإتاحة وإيقاف البيع - ينابيع الهدى" : "Yanabea Alhuda Availability & Stop Sale Tracker"}
           </h1>
           <p style="margin: 6px 0 0; color: #6f6f6f; font-size: 14px; font-weight: 500;">
             ${isAr ? "سكن مطمئن... لرحلة مباركة" : "Peaceful Stay... for a Blessed Journey"}
@@ -1881,7 +2003,8 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
   `;
 
   let tableRows = data.map((item, idx) => {
-    const isStop = item.periods !== "—" && !item.room.includes(t[currentLang].noStopSale || "No stop-sale");
+    const isStop = item.ranges && item.ranges.some(r => r.status === 'active' || r.status === 'upcoming');
+    const isSubject = item.ranges && item.ranges.some(r => r.status === 'subject');
     
     let statusStyle = "";
     if (isStop) {
@@ -1890,6 +2013,8 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
       } else {
         statusStyle = "background: #fff8e6; color: #b25e00; border: 1px solid rgba(178,94,0,0.3);";
       }
+    } else if (isSubject) {
+      statusStyle = "background: #e6f7f4; color: #0f766e; border: 1px solid rgba(15,118,110,0.3);";
     } else {
       statusStyle = "background: #ecfdf5; color: #065f46; border: 1px solid rgba(6,95,70,0.25);";
     }
@@ -1898,7 +2023,9 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
     const periodChips = item.ranges && item.ranges.length 
       ? item.ranges.map(r => {
           let chipStyle = "";
-          if (r.status === 'active') {
+          if (r.status === 'subject') {
+            chipStyle = "background: #e6f7f4; color: #0f766e; border: 1px solid rgba(15,118,110,0.25);";
+          } else if (r.status === 'active') {
             chipStyle = "background: #fdf2f2; color: #9b1c1c; border: 1px solid rgba(155,28,28,0.2);";
           } else {
             chipStyle = "background: #fff8e6; color: #b25e00; border: 1px solid rgba(178,94,0,0.2);";
@@ -1932,7 +2059,7 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
         <tr style="background: #6f1028; color: #ffffff;">
           <th style="padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px;">${isAr ? "اسم الفندق" : "Hotel Name"}</th>
           <th style="padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px;">${isAr ? "نوع الغرفة" : "Room Type"}</th>
-          <th style="padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px;">${isAr ? "فترات إيقاف البيع" : "Stop Sale Period(s)"}</th>
+          <th style="padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px;">${isAr ? "فترات الإتاحة / إيقاف البيع" : "Availability / Stop Sale Period(s)"}</th>
           <th style="padding: 14px 18px; font-size: 13px; text-align: center; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; width: 140px;">${isAr ? "الحالة" : "Status"}</th>
         </tr>
       </thead>
@@ -1959,7 +2086,7 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
   }).then(canvas => {
     const link = document.createElement("a");
     const dateStr = new Date().toISOString().slice(0,10);
-    link.download = isAr ? `تقرير_إيقاف_البيع_${dateStr}.png` : `Stop_Sale_Report_${dateStr}.png`;
+    link.download = isAr ? `تقرير_الإتاحة_وإيقاف_البيع_${dateStr}.png` : `Availability_Stop_Sale_Report_${dateStr}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
     document.body.removeChild(reportContainer);
@@ -1995,7 +2122,7 @@ function exportPDFReport(data, totalHotels, activeCount, upcomingCount, timestam
         ${logoSrc ? `<img src="${logoSrc}" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid #d4af62; object-fit: cover;" />` : ''}
         <div>
           <h1 style="margin: 0; color: #6f1028; font-size: 24px; font-weight: bold; letter-spacing: 0.3px;">
-            ${isAr ? "متابعة تواريخ إيقاف البيع - ينابيع الهدى" : "Yanabea Alhuda Stop Sale Tracker"}
+            ${isAr ? "متابعة الإتاحة وإيقاف البيع - ينابيع الهدى" : "Yanabea Alhuda Availability & Stop Sale Tracker"}
           </h1>
           <p style="margin: 6px 0 0; color: #6f6f6f; font-size: 14px; font-weight: 500;">
             ${isAr ? "سكن مطمئن... لرحلة مباركة" : "Peaceful Stay... for a Blessed Journey"}
@@ -2041,7 +2168,8 @@ function exportPDFReport(data, totalHotels, activeCount, upcomingCount, timestam
   `;
 
   let tableRows = data.map((item, idx) => {
-    const isStop = item.periods !== "—" && !item.room.includes(t[currentLang].noStopSale || "No stop-sale");
+    const isStop = item.ranges && item.ranges.some(r => r.status === 'active' || r.status === 'upcoming');
+    const isSubject = item.ranges && item.ranges.some(r => r.status === 'subject');
     
     let statusStyle = "";
     if (isStop) {
@@ -2050,6 +2178,8 @@ function exportPDFReport(data, totalHotels, activeCount, upcomingCount, timestam
       } else {
         statusStyle = "background: #fff8e6; color: #b25e00; border: 1px solid rgba(178,94,0,0.3);";
       }
+    } else if (isSubject) {
+      statusStyle = "background: #e6f7f4; color: #0f766e; border: 1px solid rgba(15,118,110,0.3);";
     } else {
       statusStyle = "background: #ecfdf5; color: #065f46; border: 1px solid rgba(6,95,70,0.25);";
     }
@@ -2057,7 +2187,9 @@ function exportPDFReport(data, totalHotels, activeCount, upcomingCount, timestam
     const periodChips = item.ranges && item.ranges.length 
       ? item.ranges.map(r => {
           let chipStyle = "";
-          if (r.status === 'active') {
+          if (r.status === 'subject') {
+            chipStyle = "background: #e6f7f4; color: #0f766e; border: 1px solid rgba(15,118,110,0.25);";
+          } else if (r.status === 'active') {
             chipStyle = "background: #fdf2f2; color: #9b1c1c; border: 1px solid rgba(155,28,28,0.2);";
           } else {
             chipStyle = "background: #fff8e6; color: #b25e00; border: 1px solid rgba(178,94,0,0.2);";
@@ -2091,7 +2223,7 @@ function exportPDFReport(data, totalHotels, activeCount, upcomingCount, timestam
         <tr style="background: #6f1028; color: #ffffff;">
           <th style="padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px;">${isAr ? "اسم الفندق" : "Hotel Name"}</th>
           <th style="padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px;">${isAr ? "نوع الغرفة" : "Room Type"}</th>
-          <th style="padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px;">${isAr ? "فترات إيقاف البيع" : "Stop Sale Period(s)"}</th>
+          <th style="padding: 14px 18px; font-size: 13px; text-align: ${isAr ? 'right' : 'left'}; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px;">${isAr ? "فترات الإتاحة / إيقاف البيع" : "Availability / Stop Sale Period(s)"}</th>
           <th style="padding: 14px 18px; font-size: 13px; text-align: center; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; width: 140px;">${isAr ? "الحالة" : "Status"}</th>
         </tr>
       </thead>
@@ -2133,7 +2265,7 @@ function exportPDFReport(data, totalHotels, activeCount, upcomingCount, timestam
     pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
     
     const dateStr = new Date().toISOString().slice(0,10);
-    const fileName = isAr ? `تقرير_إيقاف_البيع_${dateStr}.pdf` : `Stop_Sale_Report_${dateStr}.pdf`;
+    const fileName = isAr ? `تقرير_الإتاحة_وإيقاف_البيع_${dateStr}.pdf` : `Availability_Stop_Sale_Report_${dateStr}.pdf`;
     pdf.save(fileName);
     
     document.body.removeChild(reportContainer);
@@ -2184,7 +2316,7 @@ function exportCalendarReport() {
         ${logoSrc ? `<img src="${logoSrc}" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid #d4af62; object-fit: cover;" />` : ''}
         <div>
           <h1 style="margin: 0; color: #6f1028; font-size: 24px; font-weight: bold;">
-            ${isAr ? "متابعة تواريخ إيقاف البيع - ينابيع الهدى" : "Yanabea Alhuda Stop Sale Tracker"}
+            ${isAr ? "متابعة الإتاحة وإيقاف البيع - ينابيع الهدى" : "Yanabea Alhuda Availability & Stop Sale Tracker"}
           </h1>
           <p style="margin: 5px 0 0; color: #6f6f6f; font-size: 14px;">
             ${isAr ? "سكن مطمئن... لرحلة مباركة" : "Peaceful Stay... for a Blessed Journey"}
@@ -2241,6 +2373,10 @@ function exportCalendarReport() {
         <span>${t[currentLang].legendStop}</span>
       </span>
       <span style="display: inline-flex; align-items: center; gap: 6px;">
+        <span style="width: 14px; height: 14px; border-radius: 4px; display: inline-block; background: #0f766e;"></span>
+        <span>${t[currentLang].legendSubject}</span>
+      </span>
+      <span style="display: inline-flex; align-items: center; gap: 6px;">
         <span style="width: 14px; height: 14px; border-radius: 4px; display: inline-block; background: #fff; border: 1px solid var(--border);"></span>
         <span>${t[currentLang].legendOpen}</span>
       </span>
@@ -2277,8 +2413,8 @@ function exportCalendarReport() {
     const dateStr = new Date().toISOString().slice(0,10);
     const sanitizedMonth = currentMonthLabel.replace(/\s+/g, "_");
     link.download = isAr 
-      ? `تقرير_تقويم_إيقاف_البيع_${sanitizedMonth}_${dateStr}.png` 
-      : `Stop_Sale_Calendar_${sanitizedMonth}_${dateStr}.png`;
+      ? `تقرير_تقويم_الإتاحة_وإيقاف_البيع_${sanitizedMonth}_${dateStr}.png` 
+      : `Availability_Stop_Sale_Calendar_${sanitizedMonth}_${dateStr}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
     document.body.removeChild(reportContainer);
