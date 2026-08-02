@@ -405,7 +405,7 @@ async function ghRepoCoords(){
   return {owner, repo};
 }
 const IMAGE_EXT_RE = /\.(png|jpe?g|webp|gif|svg)$/i;
-const ASSET_CACHE_KEY = "repoAssetsCache_v2";
+const ASSET_CACHE_KEY = "repoAssetsCache_v3";
 
 function loadCachedAssets(){
   try{
@@ -642,24 +642,32 @@ async function fillMissingAssetsViaProbe(assets){
     manifestList = await discoverManifestAssets();
   } catch(e){}
 
-  // 2) Discover folder listing files
+  // 2) Discover folder listing files only when neither repository discovery
+  // nor the manifest supplied a workbook list.
   let indexList = [];
-  try {
-    indexList = await discoverFolderIndexAssets();
-  } catch(e){}
+  if(!result.xlsxList.length && !(manifestList && manifestList.length)){
+    try {
+      indexList = await discoverFolderIndexAssets();
+    } catch(e){}
+  }
 
-  // 3) Probe candidate names
+  // 3) Candidate-name probing is the last resort. Avoid issuing hundreds of
+  // HEAD requests when repository discovery or the manifest already worked.
   let probedUrls = [];
-  try {
-    probedUrls = await probeAllExisting(buildCandidateUrls(CANDIDATE_FOLDERS, CANDIDATE_XLSX_NAMES));
-  } catch(e){}
+  if(!result.xlsxList.length && !(manifestList && manifestList.length) && !(indexList && indexList.length)){
+    try {
+      probedUrls = await probeAllExisting(buildCandidateUrls(CANDIDATE_FOLDERS, CANDIDATE_XLSX_NAMES));
+    } catch(e){}
+  }
 
   // Combine and deduplicate
   const allFound = [];
   const addedUrls = new Set();
   const add = (url, name, path) => {
     if(!url) return;
-    const norm = url.toLowerCase().trim();
+    // GitHub discovery yields a raw URL while the manifest yields a relative
+    // URL for the same file. Dedupe by repository path so it is parsed once.
+    const norm = String(path || url).toLowerCase().trim().replace(/^\.\//, "");
     if(!addedUrls.has(norm)){
       addedUrls.add(norm);
       allFound.push({ url, name: name || url.split("/").pop(), path: path || url });
@@ -843,8 +851,22 @@ function isRedFill(cell){
 }
 const LEGEND_LABELS = [
   "open to sale","white","stop sale","red","limited availability",
-  "subject to hotel availability","subject to availability"
+  "subject to hotel availability","subject to availability","by request"
 ];
+const MONTH_SECTION_LABELS = new Set([
+  "jan","january","feb","february","mar","march","apr","april","may",
+  "jun","june","jul","july","aug","august","sep","sept","september",
+  "oct","october","nov","november","dec","december"
+]);
+
+function isNonRoomLabel(label, currentHotel){
+  const normalized = normalize(label).replace(/[.:_-]+$/g, "").trim();
+  if(!normalized) return true;
+  if(LEGEND_LABELS.includes(normalized)) return true;
+  if(MONTH_SECTION_LABELS.has(normalized)) return true;
+  if(currentHotel && normalize(cleanHotelName(label)) === normalize(currentHotel)) return true;
+  return false;
+}
 
 function cleanHotelName(val){
   if(!val) return "";
@@ -1012,11 +1034,10 @@ function parseWorkbook(wb, fileLabel, stats){
       }
 
       if(!aVal){ continue; }
-      const lower = aVal.toLowerCase();
-      if(LEGEND_LABELS.includes(lower)) continue;
       const targetHotel = currentHotel || defaultHotelFromLabel(fileLabel, sheetName);
       if(!targetHotel) continue;
       if(!Object.keys(dayByCol).length) continue;
+      if(isNonRoomLabel(aVal, targetHotel)) continue;
 
       const roomName = aVal;
       // Retain every source room row, including rooms that are fully open.
@@ -1840,6 +1861,27 @@ function buildTemplateExportHotels(year, month){
   });
 }
 
+function getTemplateReportMetrics(){
+  const ranges = buildRanges();
+  let activeStops = 0;
+  let upcomingStops = 0;
+  Object.values(ranges).forEach(rooms => {
+    Object.values(rooms).forEach(room => {
+      room.ranges.forEach(range => {
+        if(range.kind !== "stop") return;
+        const status = getRangeStatus(range);
+        if(status === "active") activeStops++;
+        else if(status === "upcoming") upcomingStops++;
+      });
+    });
+  });
+  return {
+    totalHotels: Object.keys(hotelData).length,
+    activeStops,
+    upcomingStops
+  };
+}
+
 function exportStopSaleCalendar(){
   if(!Object.keys(hotelData).length || calYear === null || calMonth === null){
     alert(t[currentLang].noExportData || "No data available to export.");
@@ -1866,11 +1908,16 @@ function exportStopSaleCalendarPdf(){
     return;
   }
   try {
+    const logo = document.getElementById("brandLogo");
+    const logoData = (logo && logo.style.display !== "none") ? getBase64Image(logo) : "";
     StopSalePdfExporter.download({
       year: calYear,
       month: calMonth,
       language: currentLang,
-      hotels: buildTemplateExportHotels(calYear, calMonth)
+      hotels: buildTemplateExportHotels(calYear, calMonth),
+      metrics: getTemplateReportMetrics(),
+      generatedAt: getFormattedDateTime(),
+      logoData: /^data:image\//i.test(logoData) ? logoData : ""
     });
   } catch (error) {
     console.error("Failed to export template-style stop-sale PDF", error);

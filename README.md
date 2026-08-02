@@ -8,7 +8,7 @@ separate teal status; a red stop-sale cell always takes priority for that date.
 
 1. Upload all these files/folders to your GitHub repo, keeping the same structure:
    - `index.html` (the site itself)
-   - `data/stop-sale.xlsx` (the workbook the site reads)
+   - the availability workbooks inside `data/`
 2. In the repo settings, enable **GitHub Pages** (Settings → Pages → Deploy from branch → `main` / root).
 3. To update the tracker later: just replace the file inside `data/` with a new
    `.xlsx` export (any file name works — the site scans the `data/` folder
@@ -39,7 +39,9 @@ isn't found, that part of the header simply stays plain (no broken image).
   Calendar View for the month currently shown. Both files follow the supplied
   Availability Calendar layout: stacked hotel blocks, weekday/date columns,
   complete room rows, red stop-sale cells, availability notes, separators,
-  and the same Open/Stop Sale legend. The PDF is a crisp A3 landscape report.
+  and the same Open/Stop Sale legend. The PDF is a readable multi-page A3
+  landscape report with the company logo, official-report header, generated
+  timestamp, summary cards, and copyright footer.
 - **All Hotels / All Room Types**: both the Hotel and Room Type dropdowns
   in the Calendar section already default to "All" on load and on refresh.
 - **Room type shorthand in the calendar**: room names are auto-abbreviated
@@ -61,16 +63,25 @@ isn't found, that part of the header simply stays plain (no broken image).
   fails, it now logs the exact reason (e.g. "repo lookup failed: HTTP
   404" for a private/misspelled repo) instead of failing silently.
 
-## Important: only the VISIBLE sheet tab is read
+## Important: only VISIBLE sheet tabs are read
 
-The app only reads whichever sheet tab is **not hidden** in the workbook
+The app reads the sheet tabs that are **not hidden** in the workbook
 (right-click a tab in Excel → Unhide/Hide to control this). Keep old months
-hidden as an archive; leave the current month's tab visible before you
-upload — that's the tab the site will treat as the live data.
+hidden as an archive; leave the current month tab visible before you upload.
 
 ## What changed in this version
 - Added separate template-style Stop Sale Excel and PDF downloads without
   removing the existing summary exports.
+- Fixed the fallback workbook list so all four packaged data files load and
+  all seven hotels appear in the Excel and PDF calendar reports, even when
+  repository API discovery is unavailable.
+- Fixed multi-month sheets so month headings, repeated hotel headings, and
+  legend rows such as `By request` are no longer exported as room types.
+- Redesigned the Stop Sale PDF into a readable three-page A3 report with
+  larger type, the branded header, summary values (hotels / active stops /
+  upcoming stops), generation details, and a copyright footer on every page.
+- Added `npm test` as a regression check for the four workbooks, seven hotels,
+  51 real source room rows, report metrics, and generated Excel hotel blocks.
 - The workbook parser now retains fully open room rows, so the downloaded
   calendar contains the complete room list rather than only affected rooms.
 - Fixed: the app was reading every sheet in the workbook, including 25
@@ -109,8 +120,8 @@ upload — that's the tab the site will treat as the live data.
 - Dropdowns in the Calendar section now default to "All Hotels" / "All
   Room Types" reliably on every load (previously the browser could
   silently restore your last-picked hotel on refresh).
-- **Audit Optimizations & Security Enhancements**:
+- **Audit optimizations**:
   - Image assets (`LOGO.png` & `SLOGAN.png`) compressed from **3.46 MB** down to **~195 KB** (>94% bandwidth reduction).
-  - Network fallback probing algorithm optimized with batched `HEAD` requests to eliminate browser request queue saturation.
+  - Network fallback probing now stops once repository discovery or the
+    manifest succeeds instead of sending unnecessary candidate-file requests.
   - Added full keyboard accessibility (`Tab`, `Enter`, `Space`) and ARIA grid/accordion semantics (`role="button"`, `aria-expanded`) across all hotel cards and interactive controls.
-  - Subresource Integrity (SRI) hash added to external CDN scripts along with local offline library fallbacks.
