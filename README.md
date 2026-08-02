@@ -35,6 +35,11 @@ Supported extensions: `.png .jpg .jpeg .webp .gif .svg`. If a matching file
 isn't found, that part of the header simply stays plain (no broken image).
 
 ## Already built-in (no action needed)
+- **Download Stop Sale (Excel or PDF)**: use either download button in the
+  Calendar View for the month currently shown. Both files follow the supplied
+  Availability Calendar layout: stacked hotel blocks, weekday/date columns,
+  complete room rows, red stop-sale cells, availability notes, separators,
+  and the same Open/Stop Sale legend. The PDF is a crisp A3 landscape report.
 - **All Hotels / All Room Types**: both the Hotel and Room Type dropdowns
   in the Calendar section already default to "All" on load and on refresh.
 - **Room type shorthand in the calendar**: room names are auto-abbreviated
@@ -64,6 +69,10 @@ hidden as an archive; leave the current month's tab visible before you
 upload — that's the tab the site will treat as the live data.
 
 ## What changed in this version
+- Added separate template-style Stop Sale Excel and PDF downloads without
+  removing the existing summary exports.
+- The workbook parser now retains fully open room rows, so the downloaded
+  calendar contains the complete room list rather than only affected rooms.
 - Fixed: the app was reading every sheet in the workbook, including 25
   hidden archived month tabs, so old stop-sale marks were leaking into the
   live tracker. Now it only reads the visible tab(s).

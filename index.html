@@ -9,9 +9,11 @@
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script>
   if (typeof XLSX === 'undefined') {
-    document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"><\/script>');
+    document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"><\/script>');
   }
 </script>
+<script src="files/stop-sale-export.js"></script>
+<script src="files/stop-sale-pdf-export.js"></script>
 <style>
   :root{
     --burgundy:#6f1028;--burgundy-dark:#420817;--gold:#d4af62;--gold-light:#ffe2a0;
@@ -235,6 +237,12 @@
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
       <h2 style="margin:0;" data-i18n="calendarTitle">Calendar View</h2>
       <div style="display:flex; gap:10px;" class="export-actions">
+        <button type="button" id="downloadStopSaleBtn" onclick="exportStopSaleCalendar()" style="background:#087a36; color:#fff; border-radius:10px; padding:8px 14px; font-weight:bold; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px; border:0; line-height:1.2; box-shadow:0 2px 5px rgba(0,0,0,0.1); transition:opacity 0.15s ease;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+          <span style="font-size:14px; line-height:1;">📥</span> <span data-i18n="downloadStopSale">Download Stop Sale Excel</span>
+        </button>
+        <button type="button" id="downloadStopSalePdfBtn" onclick="exportStopSaleCalendarPdf()" style="background:var(--burgundy); color:#fff; border-radius:10px; padding:8px 14px; font-weight:bold; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px; border:0; line-height:1.2; box-shadow:0 2px 5px rgba(0,0,0,0.1); transition:opacity 0.15s ease;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+          <span style="font-size:14px; line-height:1;">📄</span> <span data-i18n="downloadStopSalePdf">Download Stop Sale PDF</span>
+        </button>
         <button type="button" id="exportCalBtn" onclick="exportCalendarReport()" style="background:var(--burgundy); color:#fff; border-radius:10px; padding:8px 14px; font-weight:bold; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px; border:0; line-height:1.2; box-shadow:0 2px 5px rgba(0,0,0,0.1); transition:opacity 0.15s ease;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
           <span style="font-size:14px; line-height:1;">📅</span> <span data-i18n="exportCalendar">Export Calendar</span>
         </button>
@@ -753,7 +761,7 @@ const t = {
     exportExcel:"Export Excel",
     exportPNG:"Export PNG",
     exportPDF:"Export PDF",
-    exportCalendar:"Export Calendar",
+    exportCalendar:"Export Calendar",downloadStopSale:"Download Stop Sale Excel",downloadStopSalePdf:"Download Stop Sale PDF",
     noExportData:"No data available to export.",
     waitingStops:"Waiting List Stops",
     waitingList:"Waiting List"
@@ -798,7 +806,7 @@ const t = {
     exportExcel:"تصدير Excel",
     exportPNG:"تصدير صورة PNG",
     exportPDF:"تصدير ملف PDF",
-    exportCalendar:"تصدير التقويم",
+    exportCalendar:"تصدير التقويم",downloadStopSale:"تحميل إيقاف البيع Excel",downloadStopSalePdf:"تحميل إيقاف البيع PDF",
     noExportData:"لا توجد بيانات متاحة للتصدير.",
     waitingStops:"إيقافات قائمة الانتظار",
     waitingList:"قائمة الانتظار"
@@ -884,7 +892,7 @@ function resetData(){
   hotelData = {};
 }
 
-function addStopDay(hotel, roomRaw, dayNum){
+function ensureRoom(hotel, roomRaw){
   hotel = cleanHotelName(hotel);
   const key = isAllRoomsLabel(roomRaw) ? "__ALL__" : canonicalRoomKey(roomRaw);
   if(!hotelData[hotel]) hotelData[hotel] = {};
@@ -895,29 +903,24 @@ function addStopDay(hotel, roomRaw, dayNum){
       availabilityDayNumbers: new Set()
     };
   }
-  // prefer the shortest / no-suffix display variant we've seen
   if(!isAllRoomsLabel(roomRaw)){
     const cur = hotelData[hotel][key].display;
     const cleanDisplay = displayRoomName(roomRaw);
     if(!cur || cleanDisplay.length < cur.length) hotelData[hotel][key].display = cleanDisplay;
   }
-  hotelData[hotel][key].dayNumbers.add(dayNum);
-  hotelData[hotel][key].availabilityDayNumbers.delete(dayNum);
+  return hotelData[hotel][key];
+}
+
+function addStopDay(hotel, roomRaw, dayNum){
+  const entry = ensureRoom(hotel, roomRaw);
+  entry.dayNumbers.add(dayNum);
+  entry.availabilityDayNumbers.delete(dayNum);
 }
 
 function addAvailabilityDay(hotel, roomRaw, dayNum){
-  hotel = cleanHotelName(hotel);
-  const key = isAllRoomsLabel(roomRaw) ? "__ALL__" : canonicalRoomKey(roomRaw);
-  if(!hotelData[hotel]) hotelData[hotel] = {};
-  if(!hotelData[hotel][key]){
-    hotelData[hotel][key] = {
-      display: isAllRoomsLabel(roomRaw) ? null : displayRoomName(roomRaw),
-      dayNumbers: new Set(),
-      availabilityDayNumbers: new Set()
-    };
-  }
-  if(!hotelData[hotel][key].dayNumbers.has(dayNum)){
-    hotelData[hotel][key].availabilityDayNumbers.add(dayNum);
+  const entry = ensureRoom(hotel, roomRaw);
+  if(!entry.dayNumbers.has(dayNum)){
+    entry.availabilityDayNumbers.add(dayNum);
   }
 }
 
@@ -1016,6 +1019,10 @@ function parseWorkbook(wb, fileLabel, stats){
       if(!Object.keys(dayByCol).length) continue;
 
       const roomName = aVal;
+      // Retain every source room row, including rooms that are fully open.
+      // The template-style download needs the complete hotel/room grid rather
+      // than only rows that currently contain a red stop-sale cell.
+      ensureRoom(targetHotel, roomName);
       const subjectToAvailability = isSubjectToHotelAvailability(roomName);
       Object.keys(dayByCol).forEach(colStr=>{
         const C = Number(colStr);
@@ -1796,6 +1803,81 @@ function getRoomStyle(roomName) {
     return "color: #4a5568; font-weight: bold; background: #edf2f7; border-radius: 4px; padding: 2px 6px; display: inline-block;";
   }
   return "color: #2d3748; font-weight: 600;";
+}
+
+function buildTemplateExportHotels(year, month){
+  const toMonthDay = dayNum => {
+    const date = dayNumberToDate(Number(dayNum));
+    return date.getUTCFullYear() === year && date.getUTCMonth() === month
+      ? date.getUTCDate()
+      : null;
+  };
+  const daysForMonth = daySet => [...daySet]
+    .map(toMonthDay)
+    .filter(day => day !== null)
+    .sort((a,b) => a-b);
+
+  return Object.keys(hotelData).map(hotel => {
+    const rooms = hotelData[hotel] || {};
+    const regularKeys = Object.keys(rooms).filter(key => key !== "__ALL__");
+    const orderedKeys = rooms["__ALL__"] ? regularKeys.concat("__ALL__") : regularKeys;
+    return {
+      name: hotel,
+      rooms: orderedKeys.map(key => {
+        const entry = rooms[key];
+        const stopDays = key === "__ALL__"
+          ? daysForMonth(entry.dayNumbers || new Set())
+          : daysForMonth(effectiveDayNumbers(hotel, key));
+        const subjectDays = daysForMonth(effectiveAvailabilityDayNumbers(hotel, key));
+        return {
+          name: key === "__ALL__" ? null : (entry.display || key),
+          isAllRooms: key === "__ALL__",
+          stopDays,
+          subjectDays
+        };
+      })
+    };
+  });
+}
+
+function exportStopSaleCalendar(){
+  if(!Object.keys(hotelData).length || calYear === null || calMonth === null){
+    alert(t[currentLang].noExportData || "No data available to export.");
+    return;
+  }
+  try {
+    StopSaleExporter.download({
+      year: calYear,
+      month: calMonth,
+      language: currentLang,
+      hotels: buildTemplateExportHotels(calYear, calMonth)
+    });
+  } catch (error) {
+    console.error("Failed to export template-style stop-sale workbook", error);
+    alert(currentLang === "ar"
+      ? "تعذر تحميل ملف إيقاف البيع. حاول مرة أخرى."
+      : "Failed to download the stop-sale workbook. Please try again.");
+  }
+}
+
+function exportStopSaleCalendarPdf(){
+  if(!Object.keys(hotelData).length || calYear === null || calMonth === null){
+    alert(t[currentLang].noExportData || "No data available to export.");
+    return;
+  }
+  try {
+    StopSalePdfExporter.download({
+      year: calYear,
+      month: calMonth,
+      language: currentLang,
+      hotels: buildTemplateExportHotels(calYear, calMonth)
+    });
+  } catch (error) {
+    console.error("Failed to export template-style stop-sale PDF", error);
+    alert(currentLang === "ar"
+      ? "تعذر تحميل ملف إيقاف البيع PDF. حاول مرة أخرى."
+      : "Failed to download the stop-sale PDF. Please try again.");
+  }
 }
 
 function exportReport(format) {

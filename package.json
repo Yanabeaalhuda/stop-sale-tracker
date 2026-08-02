@@ -1,6 +1,6 @@
 {
   "name": "yanabea-alhuda-stop-sale-tracker",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Hotel Availability and Stop Sale Tracker for Yanabea Alhuda",
   "scripts": {
     "dev": "vercel dev",
