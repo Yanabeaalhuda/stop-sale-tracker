@@ -52,9 +52,9 @@ const appScript = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi
 vm.runInContext(appScript, context);
 
 const expectedFiles = [
-  "Availability Calendar.xlsx",
-  "Sheraton Makkah Availability Chart 29 July 2026.xlsx",
-  "Stop Sale Calendar (1).xlsx - Stop Sale (8)-1.xlsx",
+  "Availability Calendar ).xlsx",
+  "Sheraton Makkah Availability Chart 5 Augest  2026.xlsx",
+  "Stop Sale Calendar-1_260805_182333.xlsx",
   "marriot.xlsx"
 ];
 const actualFiles = fs.readdirSync(path.join(project, "data")).filter(name => /\.xlsx?$/i.test(name)).sort();

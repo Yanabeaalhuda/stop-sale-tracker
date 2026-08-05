@@ -948,15 +948,28 @@ function addAvailabilityDay(hotel, roomRaw, dayNum){
 
 function parseDateString(str) {
   if (!str) return null;
-  const match = String(str).trim().match(/^(\d+)\/([A-Za-z]{3})/i);
-  if (!match) return null;
-  const day = parseInt(match[1]);
-  const monthAbbr = match[2].toLowerCase();
-  
+  const s = String(str).trim();
   const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
-  const monthIdx = months.indexOf(monthAbbr);
-  if (monthIdx === -1) return null;
   
+  let day = null;
+  let monthIdx = -1;
+
+  // DD-MMM, DD/MMM, DD MMM, DD.MMM
+  let match = s.match(/^(\d{1,2})[\/\s\.-]([A-Za-z]{3})/i);
+  if (match) {
+    day = parseInt(match[1], 10);
+    monthIdx = months.indexOf(match[2].toLowerCase());
+  } else {
+    // MMM-DD, MMM/DD, MMM DD, MMM.DD
+    match = s.match(/^([A-Za-z]{3})[\/\s\.-](\d{1,2})/i);
+    if (match) {
+      monthIdx = months.indexOf(match[1].toLowerCase());
+      day = parseInt(match[2], 10);
+    }
+  }
+
+  if (monthIdx === -1 || !day || day < 1 || day > 31) return null;
+
   let year = new Date().getFullYear();
   if (monthIdx < 5) { // Jan to May
     if (new Date().getMonth() >= 5) {
@@ -967,7 +980,7 @@ function parseDateString(str) {
       year = year - 1;
     }
   }
-  
+
   const d = new Date(Date.UTC(year, monthIdx, day));
   if (isNaN(d.getTime())) return null;
   return Math.round(Date.UTC(year, monthIdx, day) / MS_PER_DAY);
