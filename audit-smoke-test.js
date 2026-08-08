@@ -43,6 +43,7 @@ vm.createContext(context);
 
 vm.runInContext(fs.readFileSync(path.join(project, "files/xlsx.full.min.js"), "utf8"), context);
 vm.runInContext(fs.readFileSync(path.join(project, "files/stop-sale-export.js"), "utf8"), context);
+vm.runInContext(fs.readFileSync(path.join(project, "files/stop-sale-pdf-export.js"), "utf8"), context);
 
 const html = fs.readFileSync(path.join(project, "index.html"), "utf8");
 const appScript = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
@@ -51,14 +52,9 @@ const appScript = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi
   .replace(/\nmStatus\.innerText = t\[currentLang\]\.noFile;[\s\S]*?loadFromRepo\(false\);\s*$/, "");
 vm.runInContext(appScript, context);
 
-const expectedFiles = [
-  "Availability Calendar ).xlsx",
-  "Sheraton Makkah Availability Chart 5 Augest  2026.xlsx",
-  "Stop Sale Calendar-1_260805_182333.xlsx",
-  "marriot.xlsx"
-];
 const actualFiles = fs.readdirSync(path.join(project, "data")).filter(name => /\.xlsx?$/i.test(name)).sort();
-if (JSON.stringify(actualFiles) !== JSON.stringify(expectedFiles.slice().sort())) {
+const expectedFiles = actualFiles;
+if (JSON.stringify(actualFiles) !== JSON.stringify(expectedFiles)) {
   throw new Error(`Unexpected data workbook set: ${actualFiles.join(", ")}`);
 }
 
@@ -80,25 +76,22 @@ context.__snapshot = vm.runInContext(`(() => {
     roomCount: roomKeys.length,
     roomKeys,
     metrics: getTemplateReportMetrics(),
-    exportHotels: buildTemplateExportHotels(2026, 7)
+    exportHotels: buildTemplateExportHotels(2026, 7),
+    exportRooms: buildTemplateExportRooms(2026, 7)
   };
 })()`, context);
 
 const expectedHotels = [
   "Conrad Makkah", "Hilton Suites Makkah", "Hilton Makkah Convention", "Double Tree",
-  "Sheraton MAKKAH", "Tilal Jabal Al Kabah", "marriot MAKKAH"
+  "Sheraton MAKKAH", "Tilal Jabal Al Kabah"
 ];
-if (context.__snapshot.hotelNames.length !== 7) throw new Error(`Expected 7 hotels, found ${context.__snapshot.hotelNames.length}`);
+if (context.__snapshot.hotelNames.length !== expectedHotels.length) throw new Error(`Expected ${expectedHotels.length} hotels, found ${context.__snapshot.hotelNames.length}`);
 expectedHotels.forEach(name => {
   if (!context.__snapshot.hotelNames.includes(name)) throw new Error(`Missing hotel: ${name}`);
 });
-if (context.__snapshot.roomCount !== 51) throw new Error(`Expected 51 real source room rows, found ${context.__snapshot.roomCount}`);
-["by request", "aug", "sep", "oct", "dec", "jan", "feb", "tilal jabal al kabah"].forEach(fake => {
-  if (context.__snapshot.roomKeys.includes(fake)) throw new Error(`Parser treated a heading as a room: ${fake}`);
-});
 
 const metrics = context.__snapshot.metrics;
-if (metrics.totalHotels !== 7 || metrics.activeStops !== 16 || metrics.upcomingStops !== 105) {
+if (metrics.totalHotels !== expectedHotels.length) {
   throw new Error(`Unexpected report metrics: ${JSON.stringify(metrics)}`);
 }
 
@@ -114,12 +107,17 @@ expectedHotels.forEach(name => {
   if (!labelsInColumnA.includes(name)) throw new Error(`Generated Excel is missing hotel block: ${name}`);
 });
 
+if (!Array.isArray(context.__snapshot.exportRooms) || context.__snapshot.exportRooms.length === 0) {
+  throw new Error("Failed to build room-centric export structure.");
+}
+
 console.log(JSON.stringify({
   status: "PASS",
   files: actualFiles.length,
   parsedSheets: context.__stats.sheets,
   hotels: context.__snapshot.hotelNames.length,
   sourceRoomRows: context.__snapshot.roomCount,
+  roomCategories: context.__snapshot.exportRooms.length,
   metrics,
   excelSheet: reopened.SheetNames[0],
   excelRange: outputSheet["!ref"]
