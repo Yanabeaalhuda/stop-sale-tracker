@@ -856,10 +856,7 @@
       y += separatorHeight + blockGap;
     });
 
-    const legendHeight = roomHeight * 2;
-    if (y + legendHeight > bottomLimit) newPage();
-    drawCell(pdf, margin, y,             labelWidth, roomHeight, labels.subject,   { fill: AVAIL_FILL, textColor: AVAIL_TEXT, fontSize: 8, fontStyle: "bold" });
-    drawCell(pdf, margin, y + roomHeight, labelWidth, roomHeight, labels.openToSale, { fill: "FFFFFF", fontSize: 8 });
+
 
     const pageCount = pdf.getNumberOfPages();
     for (let page = 1; page <= pageCount; page += 1) {
