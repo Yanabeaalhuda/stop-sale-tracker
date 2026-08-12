@@ -840,7 +840,15 @@
 
     hotels.forEach((hotel, hotelIndex) => {
       const fill  = HOTEL_HEADER_FILLS[hotelIndex % HOTEL_HEADER_FILLS.length];
-      const rooms = preparedRooms(hotel);
+      const allRooms = preparedRooms(hotel);
+
+      // Only include rooms that actually have subject-to-availability days.
+      // Rooms that are purely "Open to Sale" (no subjectDays) are hidden completely.
+      const rooms = allRooms.filter(room => (room.subjectDays || []).length > 0);
+
+      // If this hotel has no availability conditions at all, skip it entirely.
+      if (rooms.length === 0) return;
+
       const fullHeight = weekdayHeight + dateHeight + rooms.length * roomHeight + separatorHeight + blockGap;
       if (y + fullHeight > bottomLimit && pageHasCalendarContent) newPage();
       drawHotelHeader(hotel.name || "Hotel", fill, false);
