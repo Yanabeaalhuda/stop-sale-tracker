@@ -246,6 +246,9 @@
         <button type="button" id="downloadRoomStopSalePdfBtn" onclick="exportRoomStopSaleCalendarPdf()" style="background:#420817; color:#fff; border-radius:10px; padding:8px 14px; font-weight:bold; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px; border:0; line-height:1.2; box-shadow:0 2px 5px rgba(0,0,0,0.1); transition:opacity 0.15s ease;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
           <span style="font-size:14px; line-height:1;">🏨</span> <span data-i18n="downloadRoomStopSalePdf">Download Room PDF Report</span>
         </button>
+        <button type="button" id="downloadAvailabilityPdfBtn" onclick="exportAvailabilityCalendarPdf()" style="background:#0f766e; color:#fff; border-radius:10px; padding:8px 14px; font-weight:bold; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px; border:0; line-height:1.2; box-shadow:0 2px 5px rgba(0,0,0,0.1); transition:opacity 0.15s ease;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+          <span style="font-size:14px; line-height:1;">📋</span> <span data-i18n="downloadAvailabilityPdf">Download Availability PDF</span>
+        </button>
         <button type="button" id="exportCalBtn" onclick="exportCalendarReport()" style="background:var(--burgundy); color:#fff; border-radius:10px; padding:8px 14px; font-weight:bold; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:6px; border:0; line-height:1.2; box-shadow:0 2px 5px rgba(0,0,0,0.1); transition:opacity 0.15s ease;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
           <span style="font-size:14px; line-height:1;">📅</span> <span data-i18n="exportCalendar">Export Calendar</span>
         </button>
@@ -772,7 +775,7 @@ const t = {
     exportExcel:"Export Excel",
     exportPNG:"Export PNG",
     exportPDF:"Export PDF",
-    exportCalendar:"Export Calendar",downloadStopSale:"Download Stop Sale Excel",downloadStopSalePdf:"Download Stop Sale PDF",downloadRoomStopSalePdf:"Download Room PDF Report",
+    exportCalendar:"Export Calendar",downloadStopSale:"Download Stop Sale Excel",downloadStopSalePdf:"Download Stop Sale PDF",downloadRoomStopSalePdf:"Download Room PDF Report",downloadAvailabilityPdf:"Download Availability PDF",
     noExportData:"No data available to export.",
     waitingStops:"Waiting List Stops",
     waitingList:"Waiting List"
@@ -817,7 +820,7 @@ const t = {
     exportExcel:"تصدير Excel",
     exportPNG:"تصدير صورة PNG",
     exportPDF:"تصدير ملف PDF",
-    exportCalendar:"تصدير التقويم",downloadStopSale:"تحميل إيقاف البيع Excel",downloadStopSalePdf:"تحميل إيقاف البيع PDF",downloadRoomStopSalePdf:"تحميل تقرير الغرف (PDF)",
+    exportCalendar:"تصدير التقويم",downloadStopSale:"تحميل إيقاف البيع Excel",downloadStopSalePdf:"تحميل إيقاف البيع PDF",downloadRoomStopSalePdf:"تحميل تقرير الغرف (PDF)",downloadAvailabilityPdf:"تحميل تقرير الإتاحة (PDF)",
     noExportData:"لا توجد بيانات متاحة للتصدير.",
     waitingStops:"إيقافات قائمة الانتظار",
     waitingList:"قائمة الانتظار"
@@ -1997,6 +2000,47 @@ function exportRoomStopSaleCalendarPdf(){
     alert(currentLang === "ar"
       ? "تعذر تحميل تقرير الغرف PDF. حاول مرة أخرى."
       : "Failed to download the room-wise stop-sale PDF. Please try again.");
+  }
+}
+
+function exportAvailabilityCalendarPdf(){
+  if(!Object.keys(hotelData).length || calYear === null || calMonth === null){
+    alert(t[currentLang].noExportData || "No data available to export.");
+    return;
+  }
+  try {
+    const logo = document.getElementById("brandLogo");
+    const logoData = (logo && logo.style.display !== "none") ? getBase64Image(logo) : "";
+    // Build availability metrics: count rooms that have any subject days this month
+    const hotelsArr = buildTemplateExportHotels(calYear, calMonth);
+    let roomsWithAvailability = 0;
+    let totalSubjectDays = 0;
+    hotelsArr.forEach(hotel => {
+      (hotel.rooms || []).forEach(room => {
+        if ((room.subjectDays || []).length > 0) {
+          roomsWithAvailability++;
+          totalSubjectDays += room.subjectDays.length;
+        }
+      });
+    });
+    StopSalePdfExporter.downloadAvailability({
+      year: calYear,
+      month: calMonth,
+      language: currentLang,
+      hotels: hotelsArr,
+      metrics: {
+        totalHotels: Object.keys(hotelData).length,
+        availableRooms: roomsWithAvailability,
+        subjectRooms: totalSubjectDays
+      },
+      generatedAt: getFormattedDateTime(),
+      logoData: /^data:image\//i.test(logoData) ? logoData : ""
+    });
+  } catch (error) {
+    console.error("Failed to export availability PDF", error);
+    alert(currentLang === "ar"
+      ? "تعذر تحميل تقرير الإتاحة PDF. حاول مرة أخرى."
+      : "Failed to download the availability PDF. Please try again.");
   }
 }
 
