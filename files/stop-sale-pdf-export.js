@@ -598,9 +598,10 @@
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // AVAILABILITY-ONLY PDF REPORT
-  // Shows only "Subject to Hotel Availability" ranges. Stop-sale dates are
-  // intentionally excluded — they are never referenced in the output.
+  // AVAILABILITY REPORT  (3-colour calendar)
+  //   🔴 RED          = Not Available (stop-sale days)
+  //   🟢 DARK GREEN   = Available (open to sale)
+  //   🟩 LIGHT GREEN  = As Per Hotel Availability (subject days)
   // ─────────────────────────────────────────────────────────────────────────────
 
   function getAvailabilityFileName(options) {
@@ -664,17 +665,15 @@
     let y = 0;
     let pageHasCalendarContent = false;
 
-    // ── Colour palette ──────────────────────────────────────────────────────
-    const RED_FILL       = "FF4444";  // not available — red
-    const RED_TEXT       = "FFFFFF";
-    const GREEN_FILL     = "00B050";  // available — dark green
-    const GREEN_TEXT     = "FFFFFF";
-    const LT_GREEN_FILL  = "C6EFCE";  // subject to hotel availability — light green
-    const LT_GREEN_TEXT  = "276221";
-    const HEADER_ACCENT  = "1A6B3C";  // dark green for titles/separators
-    const HOTEL_FILLS    = [
-      "EAF4EC", "D5EDD9", "C0E6C7", "ABDFB5", "96D8A3"
-    ];
+    // ── Colour palette ───────────────────────────────────────────────────────
+    const RED_FILL      = "FF4444";  // not available
+    const RED_TEXT      = "FFFFFF";
+    const GREEN_FILL    = "00B050";  // available / open to sale
+    const GREEN_TEXT    = "FFFFFF";
+    const LT_GREEN_FILL = "C6EFCE";  // subject to hotel availability
+    const LT_GREEN_TEXT = "276221";
+    const HEADER_ACCENT = "1A6B3C";  // dark green for titles & separators
+    const AVAIL_HOTEL_FILLS = ["EAF4EC", "D5EDD9", "C0E6C7", "ABDFB5", "96D8A3"];
 
     pdf.setProperties({
       title:   `Hotel Availability Report - ${reportMonth}`,
@@ -804,21 +803,19 @@
         textColor: "1A4D2E"
       });
 
+      // Colour every day individually
       for (let day = 1; day <= daysInMonth; day += 1) {
         const x = margin + labelWidth + (day - 1) * dayWidth;
         if (stopDays.has(day)) {
-          // Not Available — RED
           drawCell(pdf, x, y, dayWidth, roomHeight, "", { fill: RED_FILL });
         } else if (subjectDays.has(day)) {
-          // Subject to Hotel Availability — LIGHT GREEN
           drawCell(pdf, x, y, dayWidth, roomHeight, "", { fill: LT_GREEN_FILL });
         } else {
-          // Available / Open to Sale — DARK GREEN
           drawCell(pdf, x, y, dayWidth, roomHeight, "", { fill: GREEN_FILL });
         }
       }
 
-      // Overlay text label on subject ranges (only when wide enough)
+      // Text label over wider subject ranges
       ranges([...subjectDays].filter(d => d >= 1 && d <= daysInMonth && !stopDays.has(d))).forEach(range => {
         if (range.end - range.start >= 2) {
           const x     = margin + labelWidth + (range.start - 1) * dayWidth;
@@ -846,7 +843,7 @@
     drawReportHeader(true);
 
     hotels.forEach((hotel, hotelIndex) => {
-      const fill  = HOTEL_FILLS[hotelIndex % HOTEL_FILLS.length];
+      const fill  = AVAIL_HOTEL_FILLS[hotelIndex % AVAIL_HOTEL_FILLS.length];
       const rooms = preparedRooms(hotel);
       const fullHeight = weekdayHeight + dateHeight + rooms.length * roomHeight + separatorHeight + blockGap;
       if (y + fullHeight > bottomLimit && pageHasCalendarContent) newPage();
@@ -872,277 +869,11 @@
     pdf.setTextColor(...rgb(HEADER_ACCENT));
     pdf.text(labels.legendTitle, margin, y + 5);
     const legendX = margin + 28;
-    drawCell(pdf, legendX,                  y, labelWidth, roomHeight, labels.notAvailable, { fill: RED_FILL,      textColor: RED_TEXT,      fontSize: 8, fontStyle: "bold" });
-    drawCell(pdf, legendX,                  y + roomHeight,     labelWidth, roomHeight, labels.available,    { fill: GREEN_FILL,    textColor: GREEN_TEXT,    fontSize: 8, fontStyle: "bold" });
-    drawCell(pdf, legendX,                  y + roomHeight * 2, labelWidth, roomHeight, labels.subject,      { fill: LT_GREEN_FILL, textColor: LT_GREEN_TEXT, fontSize: 8, fontStyle: "bold" });
+    drawCell(pdf, legendX, y,                  labelWidth, roomHeight, labels.notAvailable, { fill: RED_FILL,      textColor: RED_TEXT,      fontSize: 8, fontStyle: "bold" });
+    drawCell(pdf, legendX, y + roomHeight,     labelWidth, roomHeight, labels.available,    { fill: GREEN_FILL,    textColor: GREEN_TEXT,    fontSize: 8, fontStyle: "bold" });
+    drawCell(pdf, legendX, y + roomHeight * 2, labelWidth, roomHeight, labels.subject,      { fill: LT_GREEN_FILL, textColor: LT_GREEN_TEXT, fontSize: 8, fontStyle: "bold" });
 
     // ── Page footer ──────────────────────────────────────────────────────────
-    const pageCount = pdf.getNumberOfPages();
-    for (let page = 1; page <= pageCount; page += 1) {
-      pdf.setPage(page);
-      pdf.setDrawColor(234, 223, 206);
-      pdf.setLineWidth(0.25);
-      pdf.line(margin, pageHeight - 10.5, pageWidth - margin, pageHeight - 10.5);
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(6.2);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text(labels.copyright, pageWidth / 2, pageHeight - 5.4, { align: "center" });
-      pdf.setFont("helvetica", "normal");
-      pdf.text(`Page ${page} of ${pageCount}`, pageWidth - margin, pageHeight - 5.4, { align: "right" });
-    }
-
-    return pdf;
-  }
-
-    const metrics = Object.assign({
-      totalHotels: hotels.length,
-      availableRooms: 0,
-      subjectRooms: 0
-    }, options.metrics || {});
-
-    const labels = Object.assign({
-      allRooms:         isAr ? "جميع أنواع الغرف والأجنحة"    : "All RM Types & Suites",
-      subject:          isAr ? "خاضع لتوافر الفندق"           : "Subject to Hotel Availability",
-      openToSale:       isAr ? "متاح للبيع"                   : "Open to Sale",
-      subjectShort:     isAr ? "إتاحة"                        : "Availability",
-      reportTitle:      isAr ? "تقرير إتاحة الفنادق - ينابيع الهدى" : "Yanabea Alhuda Hotel Availability Report",
-      slogan:           isAr ? "سكن مطمئن... لرحلة مباركة"   : "Peaceful Stay... for a Blessed Journey",
-      officialReport:   isAr ? "تقرير رسمي"                   : "OFFICIAL REPORT",
-      generated:        isAr ? "تاريخ الإنشاء:"               : "Generated:",
-      totalHotels:      isAr ? "إجمالي الفنادق"               : "TOTAL HOTELS LOADED",
-      availableRooms:   isAr ? "غرف بإتاحة مشروطة"            : "ROOMS WITH AVAILABILITY",
-      subjectRooms:     isAr ? "أيام إتاحة"                   : "SUBJECT DAYS",
-      noAvailability:   isAr ? "متاح بالكامل"                 : "Open to Sale",
-      copyright:        isAr
-        ? "حقوق الطبع محفوظة ينابيع الهدى 2026 © سكن مطمئن... لرحلة مباركة"
-        : "COPYRIGHTS YANABEA ALHUDA 2026 © PEACEFUL STAY... FOR A BLESSED JOURNEY"
-    }, options.labels || {});
-
-    if (!Number.isInteger(year) || !Number.isInteger(month) || month < 0 || month > 11) {
-      throw new Error("A valid report year and month are required.");
-    }
-
-    const daysInMonth   = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-    const pdf           = new JsPDF({ orientation: "landscape", unit: "mm", format: "a3", compress: true });
-    const pageWidth     = pdf.internal.pageSize.getWidth();
-    const pageHeight    = pdf.internal.pageSize.getHeight();
-    const margin        = 8;
-    const contentWidth  = pageWidth - margin * 2;
-    const labelWidth    = 94;
-    const dayWidth      = (contentWidth - labelWidth) / daysInMonth;
-    const weekdayHeight = 7;
-    const dateHeight    = 6;
-    const roomHeight    = 7.2;
-    const separatorHeight = 2.4;
-    const blockGap      = 3;
-    const bottomLimit   = pageHeight - 14;
-    const generatedAt   = String(options.generatedAt || new Date().toLocaleString("en-US"));
-    const reportMonth   = `${MONTH_NAMES[month]} ${year}`;
-    let y = 0;
-    let pageHasCalendarContent = false;
-
-    // Accent colours for this report: teal/green palette (no red)
-    const ACCENT_TITLE  = "0F766E"; // teal — availability theme
-    const ACCENT_CARD1  = "0F766E";
-    const ACCENT_CARD2  = "087A36";
-    const ACCENT_CARD3  = "1A6B5A";
-    const AVAIL_FILL    = "E6F7F4"; // light teal cell background
-    const AVAIL_TEXT    = "0F766E"; // teal text
-    const HEADER_FILL   = "0F766E"; // section header background
-    const HOTEL_HEADER_FILLS = [
-      "D9F2EC", "BFE8E0", "A5DDD3", "8BD1C6", "71C5B8",
-      "57B9AB", "3DAD9D", "23A190", "0F9582"
-    ];
-
-    pdf.setProperties({
-      title:   `Hotel Availability Report - ${reportMonth}`,
-      subject: "Hotel availability calendar",
-      author:  "Yanabea Alhuda",
-      creator: "Yanabea Alhuda Stop Sale Tracker"
-    });
-
-    function drawLogo(x, logoY) {
-      const logoData = options.logoData;
-      if (!logoData || typeof logoData !== "string" || !/^data:image\//i.test(logoData)) return false;
-      try {
-        const format = /^data:image\/jpe?g/i.test(logoData) ? "JPEG" : "PNG";
-        pdf.addImage(logoData, format, x, logoY, 20, 20, undefined, "FAST");
-        return true;
-      } catch (err) {
-        console.warn("Could not add logo to PDF", err);
-        return false;
-      }
-    }
-
-    function drawMetricCard(x, cardY, width, accent, label, value) {
-      pdf.setFillColor(255, 255, 255);
-      pdf.setDrawColor(234, 223, 206);
-      pdf.setLineWidth(0.3);
-      pdf.roundedRect(x, cardY, width, 20, 2, 2, "FD");
-      pdf.setFillColor(...rgb(accent));
-      pdf.roundedRect(x, cardY, 2.2, 20, 1, 1, "F");
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(7.2);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text(label, x + width / 2, cardY + 7, { align: "center" });
-      pdf.setFontSize(14);
-      pdf.setTextColor(...rgb(accent));
-      pdf.text(String(value), x + width / 2, cardY + 15.5, { align: "center" });
-    }
-
-    function drawReportHeader(firstPage) {
-      y = margin;
-      const hasLogo = firstPage && drawLogo(margin, y);
-      const titleX  = margin + (hasLogo ? 25 : 0);
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(firstPage ? 16 : 13);
-      pdf.setTextColor(...rgb(ACCENT_TITLE));
-      pdf.text(labels.reportTitle, titleX, y + 7.2);
-
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(firstPage ? 8.5 : 7.5);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text(labels.slogan, titleX, y + 13.5);
-
-      pdf.setFont("helvetica", firstPage ? "bold" : "normal");
-      pdf.setFontSize(firstPage ? 9.5 : 7.2);
-      pdf.setTextColor(...(firstPage ? rgb(ACCENT_TITLE) : [100, 100, 100]));
-      pdf.text(
-        firstPage ? labels.officialReport : `${labels.generated} ${generatedAt}`,
-        pageWidth - margin, y + 6.8, { align: "right" }
-      );
-      if (firstPage) {
-        pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(7);
-        pdf.setTextColor(100, 100, 100);
-        pdf.text(`${labels.generated} ${generatedAt}`, pageWidth - margin, y + 13.2, { align: "right" });
-      }
-
-      // Gold divider line
-      pdf.setDrawColor(212, 175, 98);
-      pdf.setLineWidth(0.8);
-      pdf.line(margin, y + 22.5, pageWidth - margin, y + 22.5);
-
-      if (firstPage) {
-        const cardGap   = 6;
-        const cardWidth = (contentWidth - cardGap * 2) / 3;
-        const cardY     = y + 28;
-        drawMetricCard(margin,                          cardY, cardWidth, ACCENT_CARD1, labels.totalHotels,    metrics.totalHotels);
-        drawMetricCard(margin + cardWidth + cardGap,    cardY, cardWidth, ACCENT_CARD2, labels.availableRooms, metrics.availableRooms);
-        drawMetricCard(margin + (cardWidth + cardGap)*2, cardY, cardWidth, ACCENT_CARD3, labels.subjectRooms,  metrics.subjectRooms);
-        y = cardY + 26;
-      } else {
-        y += 28;
-      }
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(11);
-      pdf.setTextColor(...rgb(ACCENT_TITLE));
-      pdf.text(
-        `${labels.reportTitle} - ${reportMonth}${firstPage ? "" : " (continued)"}`,
-        margin, y
-      );
-      y += 4.5;
-      pageHasCalendarContent = false;
-    }
-
-    function newPage() {
-      pdf.addPage("a3", "landscape");
-      drawReportHeader(false);
-    }
-
-    function drawHotelHeader(name, fill, continued) {
-      const title = continued ? `${name} (continued)` : name;
-      drawCell(pdf, margin, y, labelWidth, weekdayHeight + dateHeight, title, {
-        fill, fontSize: 9.2, fontStyle: "bold", textColor: "0F4F47"
-      });
-      for (let day = 1; day <= daysInMonth; day += 1) {
-        const x    = margin + labelWidth + (day - 1) * dayWidth;
-        const date = new Date(Date.UTC(year, month, day));
-        drawCell(pdf, x, y, dayWidth, weekdayHeight, WEEKDAYS[date.getUTCDay()], {
-          fill, fontSize: 7.2, fontStyle: "bold", textColor: "0F4F47"
-        });
-        drawCell(pdf, x, y + weekdayHeight, dayWidth, dateHeight, `${day}/${MONTH_NAMES[month].slice(0, 3)}`, {
-          fill: "FFFFFF", fontSize: 6.2
-        });
-      }
-      y += weekdayHeight + dateHeight;
-      pageHasCalendarContent = true;
-    }
-
-    function drawRoomAvailability(room, fill) {
-      const subjectDays = new Set((room.subjectDays || []).map(Number));
-      const availDays   = [...subjectDays].filter(d => d >= 1 && d <= daysInMonth);
-      const hasSubject  = availDays.length > 0;
-      const baseName    = room.isAllRooms ? labels.allRooms : (room.name || "Room Type");
-      const name        = hasSubject && !room.isAllRooms
-        ? `${baseName} (${labels.subjectShort})`
-        : baseName;
-
-      drawCell(pdf, margin, y, labelWidth, roomHeight, name, {
-        fill: room.isAllRooms ? "FFFFFF" : fill,
-        fontSize: hasSubject ? 7 : 8,
-        fontStyle: room.isAllRooms ? "bold" : "normal",
-        textColor: hasSubject ? AVAIL_TEXT : "333333"
-      });
-
-      for (let day = 1; day <= daysInMonth; day += 1) {
-        const x = margin + labelWidth + (day - 1) * dayWidth;
-        drawCell(pdf, x, y, dayWidth, roomHeight, "", { fill: "FFFFFF" });
-      }
-
-      ranges(availDays).forEach(range => {
-        const x      = margin + labelWidth + (range.start - 1) * dayWidth;
-        const width  = (range.end - range.start + 1) * dayWidth;
-        const label  = range.end - range.start >= 2 ? labels.subject : "";
-        drawCell(pdf, x, y, width, roomHeight, label, {
-          fill: AVAIL_FILL, textColor: AVAIL_TEXT, fontSize: 6, fontStyle: "italic"
-        });
-      });
-
-      y += roomHeight;
-    }
-
-    function preparedRooms(hotel) {
-      const supplied = Array.isArray(hotel.rooms) ? hotel.rooms : [];
-      const regular  = supplied.filter(r => !r.isAllRooms);
-      const allRooms = supplied.find(r => r.isAllRooms) || {
-        name: labels.allRooms, isAllRooms: true, stopDays: [], subjectDays: []
-      };
-      return regular.concat(allRooms);
-    }
-
-    drawReportHeader(true);
-
-    hotels.forEach((hotel, hotelIndex) => {
-      const fill  = HOTEL_HEADER_FILLS[hotelIndex % HOTEL_HEADER_FILLS.length];
-      const allRooms = preparedRooms(hotel);
-
-      // Only include rooms that actually have subject-to-availability days.
-      // Rooms that are purely "Open to Sale" (no subjectDays) are hidden completely.
-      const rooms = allRooms.filter(room => (room.subjectDays || []).length > 0);
-
-      // If this hotel has no availability conditions at all, skip it entirely.
-      if (rooms.length === 0) return;
-
-      const fullHeight = weekdayHeight + dateHeight + rooms.length * roomHeight + separatorHeight + blockGap;
-      if (y + fullHeight > bottomLimit && pageHasCalendarContent) newPage();
-      drawHotelHeader(hotel.name || "Hotel", fill, false);
-      rooms.forEach(room => {
-        if (y + roomHeight + separatorHeight > bottomLimit) {
-          newPage();
-          drawHotelHeader(hotel.name || "Hotel", fill, true);
-        }
-        drawRoomAvailability(room, fill);
-      });
-      pdf.setFillColor(...rgb(HEADER_FILL));
-      pdf.rect(margin, y, contentWidth, separatorHeight, "F");
-      y += separatorHeight + blockGap;
-    });
-
-
-
     const pageCount = pdf.getNumberOfPages();
     for (let page = 1; page <= pageCount; page += 1) {
       pdf.setPage(page);

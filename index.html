@@ -2011,16 +2011,13 @@ function exportAvailabilityCalendarPdf(){
   try {
     const logo = document.getElementById("brandLogo");
     const logoData = (logo && logo.style.display !== "none") ? getBase64Image(logo) : "";
-    // Build availability metrics: count rooms that have any subject days this month
     const hotelsArr = buildTemplateExportHotels(calYear, calMonth);
-    let roomsWithAvailability = 0;
+    let notAvailableDays = 0;
     let totalSubjectDays = 0;
     hotelsArr.forEach(hotel => {
       (hotel.rooms || []).forEach(room => {
-        if ((room.subjectDays || []).length > 0) {
-          roomsWithAvailability++;
-          totalSubjectDays += room.subjectDays.length;
-        }
+        notAvailableDays += (room.stopDays    || []).length;
+        totalSubjectDays += (room.subjectDays || []).length;
       });
     });
     StopSalePdfExporter.downloadAvailability({
@@ -2029,9 +2026,9 @@ function exportAvailabilityCalendarPdf(){
       language: currentLang,
       hotels: hotelsArr,
       metrics: {
-        totalHotels: Object.keys(hotelData).length,
-        availableRooms: roomsWithAvailability,
-        subjectRooms: totalSubjectDays
+        totalHotels:  Object.keys(hotelData).length,
+        notAvailable: notAvailableDays,
+        subjectDays:  totalSubjectDays
       },
       generatedAt: getFormattedDateTime(),
       logoData: /^data:image\//i.test(logoData) ? logoData : ""
