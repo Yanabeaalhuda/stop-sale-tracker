@@ -8,6 +8,10 @@
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
   ];
+  const MONTH_NAMES_AR = [
+    "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+    "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
+  ];
   const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   function pdfConstructor() {
@@ -85,14 +89,21 @@
   function getFileName(options) {
     const month = Number(options.month);
     const year = Number(options.year);
-    if (options.language === "ar") return `تقويم_إيقاف_البيع_${MONTH_NAMES[month]}_${year}.pdf`;
-    return `Stop_Sale_Calendar_${MONTH_NAMES[month]}_${year}.pdf`;
+    const validMonth = Number.isInteger(month) && month >= 0 && month <= 11;
+    const monthLabel = validMonth ? MONTH_NAMES[month] : "Report";
+    const yearLabel = Number.isInteger(year) ? year : new Date().getFullYear();
+    if (options.language === "ar") return `تقويم_إيقاف_البيع_${validMonth ? MONTH_NAMES_AR[month] : "التقرير"}_${yearLabel}.pdf`;
+    return `Stop_Sale_Calendar_${monthLabel}_${yearLabel}.pdf`;
   }
 
   function buildDocument(options) {
     const JsPDF = pdfConstructor();
-    const year = Number(options.year);
-    const month = Number(options.month);
+    const isAr = options.language === "ar";
+    const defaultYear = Number.isInteger(Number(options.year)) ? Number(options.year) : new Date().getFullYear();
+    const defaultMonth = (Number.isInteger(Number(options.month)) && Number(options.month) >= 0 && Number(options.month) <= 11)
+      ? Number(options.month)
+      : new Date().getMonth();
+
     const hotels = Array.isArray(options.hotels) ? options.hotels : [];
     const metrics = Object.assign({
       totalHotels: hotels.length,
@@ -100,47 +111,42 @@
       upcomingStops: 0
     }, options.metrics || {});
     const labels = Object.assign({
-      allRooms: "All RM Types & Suites",
-      subject: "Subject to hotel availability",
-      openToSale: "Open to Sale",
-      white: "White",
-      stopSale: "Stop Sale",
-      red: "RED",
-      reportTitle: "Yanabea Alhuda Availability & Stop Sale Tracker",
-      slogan: "Peaceful Stay... for a Blessed Journey",
-      officialReport: "OFFICIAL REPORT",
-      generated: "Generated:",
-      totalHotels: "TOTAL HOTELS LOADED",
-      activeStops: "ACTIVE STOP SALES",
-      upcomingStops: "UPCOMING STOP SALES",
-      copyright: "COPYRIGHTS YANABEA ALHUDA 2026 © PEACEFUL STAY... FOR A BLESSED JOURNEY"
+      allRooms: isAr ? "جميع أنواع الغرف والأجنحة" : "All RM Types & Suites",
+      subject: isAr ? "خاضع لتوافر الفندق" : "Subject to hotel availability",
+      openToSale: isAr ? "متاح للبيع" : "Open to Sale",
+      white: isAr ? "أبيض" : "White",
+      stopSale: isAr ? "إيقاف بيع" : "Stop Sale",
+      red: isAr ? "أحمر" : "RED",
+      reportTitle: isAr ? "تقرير إيقاف البيع والإتاحة - ينابيع الهدى" : "Yanabea Alhuda Availability & Stop Sale Tracker",
+      slogan: isAr ? "سكن مطمئن... لرحلة مباركة" : "Peaceful Stay... for a Blessed Journey",
+      officialReport: isAr ? "تقرير رسمي" : "OFFICIAL REPORT",
+      generated: isAr ? "تاريخ الإنشاء:" : "Generated:",
+      totalHotels: isAr ? "إجمالي الفنادق" : "TOTAL HOTELS LOADED",
+      activeStops: isAr ? "إيقاف فعال الآن" : "ACTIVE STOP SALES",
+      upcomingStops: isAr ? "إيقاف بيع قادم" : "UPCOMING STOP SALES",
+      copyright: isAr
+        ? "حقوق الطبع محفوظة ينابيع الهدى 2026 © سكن مطمئن... لرحلة مباركة"
+        : "COPYRIGHTS YANABEA ALHUDA 2026 © PEACEFUL STAY... FOR A BLESSED JOURNEY"
     }, options.labels || {});
 
-    if (!Number.isInteger(year) || !Number.isInteger(month) || month < 0 || month > 11) {
-      throw new Error("A valid report year and month are required.");
-    }
-
-    const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
     const pdf = new JsPDF({ orientation: "landscape", unit: "mm", format: "a3", compress: true });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 8;
     const contentWidth = pageWidth - margin * 2;
     const labelWidth = 94;
-    const dayWidth = (contentWidth - labelWidth) / daysInMonth;
     const weekdayHeight = 7;
     const dateHeight = 6;
     const roomHeight = 7.2;
     const separatorHeight = 2.4;
-    const blockGap = 3;
+    const blockGap = 3.5;
     const bottomLimit = pageHeight - 14;
     const generatedAt = String(options.generatedAt || new Date().toLocaleString("en-US"));
-    const reportMonth = `${MONTH_NAMES[month]} ${year}`;
     let y = 0;
     let pageHasCalendarContent = false;
 
     pdf.setProperties({
-      title: `Stop Sale Calendar - ${reportMonth}`,
+      title: isAr ? "تقويم إيقاف البيع" : "Stop Sale Calendar",
       subject: "Hotel availability and stop-sale calendar",
       author: "Yanabea Alhuda",
       creator: "Yanabea Alhuda Stop Sale Tracker"
@@ -211,16 +217,11 @@
         drawMetricCard(margin, cardY, cardWidth, "6F1028", labels.totalHotels, metrics.totalHotels);
         drawMetricCard(margin + cardWidth + cardGap, cardY, cardWidth, "B00020", labels.activeStops, metrics.activeStops);
         drawMetricCard(margin + (cardWidth + cardGap) * 2, cardY, cardWidth, "B56A00", labels.upcomingStops, metrics.upcomingStops);
-        y = cardY + 26;
+        y = cardY + 27;
       } else {
         y += 28;
       }
 
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(11);
-      pdf.setTextColor(111, 16, 40);
-      pdf.text(`Stop Sale Calendar - ${reportMonth}${firstPage ? "" : " (continued)"}`, margin, y);
-      y += 4.5;
       pageHasCalendarContent = false;
     }
 
@@ -229,18 +230,27 @@
       drawReportHeader(false);
     }
 
-    function drawHotelHeader(name, fill, continued) {
+    function drawMonthTitle(monthTitleText, continued) {
+      const displayTitle = continued ? `${monthTitleText} (continued)` : monthTitleText;
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(11);
+      pdf.setTextColor(111, 16, 40);
+      pdf.text(displayTitle, margin, y + 4.5);
+      y += 6.5;
+    }
+
+    function drawHotelHeader(name, fill, curYear, curMonth, curDaysInMonth, curDayWidth, continued) {
       const title = continued ? `${name} (continued)` : name;
       drawCell(pdf, margin, y, labelWidth, weekdayHeight + dateHeight, title, {
         fill, fontSize: 9.2, fontStyle: "bold"
       });
-      for (let day = 1; day <= daysInMonth; day += 1) {
-        const x = margin + labelWidth + (day - 1) * dayWidth;
-        const date = new Date(Date.UTC(year, month, day));
-        drawCell(pdf, x, y, dayWidth, weekdayHeight, WEEKDAYS[date.getUTCDay()], {
+      for (let day = 1; day <= curDaysInMonth; day += 1) {
+        const x = margin + labelWidth + (day - 1) * curDayWidth;
+        const date = new Date(Date.UTC(curYear, curMonth, day));
+        drawCell(pdf, x, y, curDayWidth, weekdayHeight, WEEKDAYS[date.getUTCDay()], {
           fill, fontSize: 7.2, fontStyle: "bold"
         });
-        drawCell(pdf, x, y + weekdayHeight, dayWidth, dateHeight, `${day}/${MONTH_NAMES[month].slice(0, 3)}`, {
+        drawCell(pdf, x, y + weekdayHeight, curDayWidth, dateHeight, `${day}/${MONTH_NAMES[curMonth].slice(0, 3)}`, {
           fill: "FFFFFF", fontSize: 6.2
         });
       }
@@ -248,10 +258,10 @@
       pageHasCalendarContent = true;
     }
 
-    function drawRoom(room, fill) {
+    function drawRoom(room, fill, curDaysInMonth, curDayWidth) {
       const stopDays = new Set((room.stopDays || []).map(Number));
       const subjectDays = new Set((room.subjectDays || []).map(Number));
-      const availableDays = [...subjectDays].filter(day => day >= 1 && day <= daysInMonth && !stopDays.has(day));
+      const availableDays = [...subjectDays].filter(day => day >= 1 && day <= curDaysInMonth && !stopDays.has(day));
       const hasSubject = availableDays.length > 0;
       const baseName = room.isAllRooms ? labels.allRooms : (room.name || "Room Type");
       const name = hasSubject && !room.isAllRooms ? `${baseName} (${labels.subject})` : baseName;
@@ -260,15 +270,15 @@
         fontSize: hasSubject ? 7 : 8,
         fontStyle: room.isAllRooms ? "bold" : "normal"
       });
-      for (let day = 1; day <= daysInMonth; day += 1) {
-        const x = margin + labelWidth + (day - 1) * dayWidth;
-        drawCell(pdf, x, y, dayWidth, roomHeight, "", {
+      for (let day = 1; day <= curDaysInMonth; day += 1) {
+        const x = margin + labelWidth + (day - 1) * curDayWidth;
+        drawCell(pdf, x, y, curDayWidth, roomHeight, "", {
           fill: stopDays.has(day) ? "FF0000" : "FFFFFF"
         });
       }
       ranges(availableDays).forEach(range => {
-        const x = margin + labelWidth + (range.start - 1) * dayWidth;
-        const width = (range.end - range.start + 1) * dayWidth;
+        const x = margin + labelWidth + (range.start - 1) * curDayWidth;
+        const width = (range.end - range.start + 1) * curDayWidth;
         drawCell(pdf, x, y, width, roomHeight, range.end - range.start >= 2 ? labels.subject : "", {
           fill: "FFFFFF", textColor: "0F766E", fontSize: 6, fontStyle: "italic"
         });
@@ -276,8 +286,8 @@
       y += roomHeight;
     }
 
-    function preparedRooms(hotel) {
-      const supplied = Array.isArray(hotel.rooms) ? hotel.rooms : [];
+    function preparedRooms(roomList) {
+      const supplied = Array.isArray(roomList) ? roomList : [];
       const regular = supplied.filter(room => !room.isAllRooms);
       const allRooms = supplied.find(room => room.isAllRooms) || {
         name: labels.allRooms, isAllRooms: true, stopDays: [], subjectDays: []
@@ -286,19 +296,50 @@
     }
 
     drawReportHeader(true);
+
     hotels.forEach((hotel, hotelIndex) => {
       const fill = HOTEL_FILLS[hotelIndex % HOTEL_FILLS.length];
-      const rooms = preparedRooms(hotel);
-      const fullHeight = weekdayHeight + dateHeight + rooms.length * roomHeight + separatorHeight + blockGap;
-      if (y + fullHeight > bottomLimit && pageHasCalendarContent) newPage();
-      drawHotelHeader(hotel.name || "Hotel", fill, false);
-      rooms.forEach(room => {
-        if (y + roomHeight + separatorHeight > bottomLimit) {
+      const hotelMonths = (Array.isArray(hotel.months) && hotel.months.length)
+        ? hotel.months
+        : [{ year: defaultYear, month: defaultMonth, rooms: hotel.rooms || [] }];
+
+      hotelMonths.forEach((monthData, monthIndex) => {
+        const curYear = Number(monthData.year);
+        const curMonth = Number(monthData.month);
+        const curDaysInMonth = new Date(Date.UTC(curYear, curMonth + 1, 0)).getUTCDate();
+        const curDayWidth = (contentWidth - labelWidth) / curDaysInMonth;
+        const monthName = MONTH_NAMES[curMonth] || "";
+        const monthTitleText = isAr
+          ? `تقويم إيقاف البيع - ${MONTH_NAMES_AR[curMonth] || monthName} ${curYear}`
+          : `Stop Sale Calendar - ${monthName} ${curYear}`;
+
+        const rooms = preparedRooms(monthData.rooms);
+        const monthTitleHeight = 6.5;
+        const tableHeaderHeight = weekdayHeight + dateHeight;
+        const fullBlockHeight = monthTitleHeight + tableHeaderHeight + rooms.length * roomHeight + (monthIndex === hotelMonths.length - 1 ? (separatorHeight + blockGap) : 3.5);
+
+        if (y + fullBlockHeight > bottomLimit && pageHasCalendarContent) {
           newPage();
-          drawHotelHeader(hotel.name || "Hotel", fill, true);
         }
-        drawRoom(room, fill);
+
+        drawMonthTitle(monthTitleText, false);
+        drawHotelHeader(hotel.name || "Hotel", fill, curYear, curMonth, curDaysInMonth, curDayWidth, false);
+
+        rooms.forEach(room => {
+          if (y + roomHeight + (monthIndex === hotelMonths.length - 1 ? separatorHeight : 0) > bottomLimit) {
+            newPage();
+            drawMonthTitle(monthTitleText, true);
+            drawHotelHeader(hotel.name || "Hotel", fill, curYear, curMonth, curDaysInMonth, curDayWidth, true);
+          }
+          drawRoom(room, fill, curDaysInMonth, curDayWidth);
+        });
+
+        if (monthIndex < hotelMonths.length - 1) {
+          y += 3.5; // space between months of the same hotel
+        }
       });
+
+      // Black separator bar after each hotel's complete list of months
       pdf.setFillColor(0, 0, 0);
       pdf.rect(margin, y, contentWidth, separatorHeight, "F");
       y += separatorHeight + blockGap;

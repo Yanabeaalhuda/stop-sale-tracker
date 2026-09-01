@@ -1845,25 +1845,51 @@ function getRoomStyle(roomName) {
   return "color: #2d3748; font-weight: 600;";
 }
 
-function buildTemplateExportHotels(year, month){
-  const toMonthDay = dayNum => {
-    const date = dayNumberToDate(Number(dayNum));
-    return date.getUTCFullYear() === year && date.getUTCMonth() === month
-      ? date.getUTCDate()
-      : null;
-  };
-  const daysForMonth = daySet => [...daySet]
-    .map(toMonthDay)
-    .filter(day => day !== null)
-    .sort((a,b) => a-b);
+function buildTemplateExportHotels(defaultYear, defaultMonth){
+  const targetYear = (defaultYear !== undefined && defaultYear !== null) ? defaultYear : calYear;
+  const targetMonth = (defaultMonth !== undefined && defaultMonth !== null) ? defaultMonth : calMonth;
 
   return Object.keys(hotelData).map(hotel => {
     const rooms = hotelData[hotel] || {};
     const regularKeys = Object.keys(rooms).filter(key => key !== "__ALL__");
     const orderedKeys = rooms["__ALL__"] ? regularKeys.concat("__ALL__") : regularKeys;
-    return {
-      name: hotel,
-      rooms: orderedKeys.map(key => {
+
+    // Discover all distinct months (year, month) that have stop sales, subject availability, or days defined in sheet
+    const monthMap = new Map();
+    const addDateNum = dayNum => {
+      const date = dayNumberToDate(Number(dayNum));
+      const y = date.getUTCFullYear();
+      const m = date.getUTCMonth();
+      const k = `${y}-${String(m).padStart(2, '0')}`;
+      if (!monthMap.has(k)) monthMap.set(k, { year: y, month: m });
+    };
+
+    orderedKeys.forEach(key => {
+      effectiveDayNumbers(hotel, key).forEach(addDateNum);
+      effectiveAvailabilityDayNumbers(hotel, key).forEach(addDateNum);
+      if (rooms[key].dayNumbers) rooms[key].dayNumbers.forEach(addDateNum);
+    });
+
+    if (monthMap.size === 0 && targetYear !== null && targetMonth !== null) {
+      const k = `${targetYear}-${String(targetMonth).padStart(2, '0')}`;
+      monthMap.set(k, { year: targetYear, month: targetMonth });
+    }
+
+    const sortedMonths = Array.from(monthMap.values()).sort((a, b) => (a.year * 12 + a.month) - (b.year * 12 + b.month));
+
+    const buildRoomsForMonth = (y, m) => {
+      const toMonthDay = dayNum => {
+        const date = dayNumberToDate(Number(dayNum));
+        return date.getUTCFullYear() === y && date.getUTCMonth() === m
+          ? date.getUTCDate()
+          : null;
+      };
+      const daysForMonth = daySet => [...daySet]
+        .map(toMonthDay)
+        .filter(day => day !== null)
+        .sort((a,b) => a-b);
+
+      return orderedKeys.map(key => {
         const entry = rooms[key];
         const stopDays = key === "__ALL__"
           ? daysForMonth(entry.dayNumbers || new Set())
@@ -1875,7 +1901,24 @@ function buildTemplateExportHotels(year, month){
           stopDays,
           subjectDays
         };
-      })
+      });
+    };
+
+    const months = sortedMonths.map(m => ({
+      year: m.year,
+      month: m.month,
+      daysInMonth: new Date(Date.UTC(m.year, m.month + 1, 0)).getUTCDate(),
+      rooms: buildRoomsForMonth(m.year, m.month)
+    }));
+
+    const fallbackYear = targetYear !== null ? targetYear : (sortedMonths[0] ? sortedMonths[0].year : new Date().getFullYear());
+    const fallbackMonth = targetMonth !== null ? targetMonth : (sortedMonths[0] ? sortedMonths[0].month : new Date().getMonth());
+    const defaultRooms = buildRoomsForMonth(fallbackYear, fallbackMonth);
+
+    return {
+      name: hotel,
+      months,
+      rooms: defaultRooms
     };
   });
 }

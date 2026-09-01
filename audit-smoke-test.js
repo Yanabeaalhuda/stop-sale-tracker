@@ -83,7 +83,7 @@ context.__snapshot = vm.runInContext(`(() => {
 
 const expectedHotels = [
   "Conrad Makkah", "Hilton Suites Makkah", "Hilton Makkah Convention", "Double Tree",
-  "Sheraton MAKKAH", "Tilal Jabal Al Kabah"
+  "Jabal Omar Hyatt Regency", "Sheraton MAKKAH", "Tilal Jabal Al Kabah"
 ];
 if (context.__snapshot.hotelNames.length !== expectedHotels.length) throw new Error(`Expected ${expectedHotels.length} hotels, found ${context.__snapshot.hotelNames.length}`);
 expectedHotels.forEach(name => {
@@ -104,7 +104,8 @@ const labelsInColumnA = Object.entries(outputSheet)
   .filter(([address, cell]) => /^A\d+$/.test(address) && cell && cell.v != null)
   .map(([, cell]) => String(cell.v));
 expectedHotels.forEach(name => {
-  if (!labelsInColumnA.includes(name)) throw new Error(`Generated Excel is missing hotel block: ${name}`);
+  const found = labelsInColumnA.some(label => label === name || label.startsWith(name + " - "));
+  if (!found) throw new Error(`Generated Excel is missing hotel block: ${name}`);
 });
 
 if (!Array.isArray(context.__snapshot.exportRooms) || context.__snapshot.exportRooms.length === 0) {
