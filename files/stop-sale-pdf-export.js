@@ -239,13 +239,13 @@
       y += 6.5;
     }
 
-    function drawHotelHeader(name, fill, curYear, curMonth, curDaysInMonth, curDayWidth, continued) {
+    function drawHotelHeader(name, fill, curYear, curMonth, startDay, curDaysInMonth, curDayWidth, continued) {
       const title = continued ? `${name} (continued)` : name;
       drawCell(pdf, margin, y, labelWidth, weekdayHeight + dateHeight, title, {
         fill, fontSize: 9.2, fontStyle: "bold"
       });
-      for (let day = 1; day <= curDaysInMonth; day += 1) {
-        const x = margin + labelWidth + (day - 1) * curDayWidth;
+      for (let day = startDay; day <= curDaysInMonth; day += 1) {
+        const x = margin + labelWidth + (day - startDay) * curDayWidth;
         const date = new Date(Date.UTC(curYear, curMonth, day));
         drawCell(pdf, x, y, curDayWidth, weekdayHeight, WEEKDAYS[date.getUTCDay()], {
           fill, fontSize: 7.2, fontStyle: "bold"
@@ -258,10 +258,10 @@
       pageHasCalendarContent = true;
     }
 
-    function drawRoom(room, fill, curDaysInMonth, curDayWidth) {
+    function drawRoom(room, fill, startDay, curDaysInMonth, curDayWidth) {
       const stopDays = new Set((room.stopDays || []).map(Number));
       const subjectDays = new Set((room.subjectDays || []).map(Number));
-      const availableDays = [...subjectDays].filter(day => day >= 1 && day <= curDaysInMonth && !stopDays.has(day));
+      const availableDays = [...subjectDays].filter(day => day >= startDay && day <= curDaysInMonth && !stopDays.has(day));
       const hasSubject = availableDays.length > 0;
       const baseName = room.isAllRooms ? labels.allRooms : (room.name || "Room Type");
       const name = hasSubject && !room.isAllRooms ? `${baseName} (${labels.subject})` : baseName;
@@ -270,14 +270,14 @@
         fontSize: hasSubject ? 7 : 8,
         fontStyle: room.isAllRooms ? "bold" : "normal"
       });
-      for (let day = 1; day <= curDaysInMonth; day += 1) {
-        const x = margin + labelWidth + (day - 1) * curDayWidth;
+      for (let day = startDay; day <= curDaysInMonth; day += 1) {
+        const x = margin + labelWidth + (day - startDay) * curDayWidth;
         drawCell(pdf, x, y, curDayWidth, roomHeight, "", {
           fill: stopDays.has(day) ? "FF0000" : "FFFFFF"
         });
       }
       ranges(availableDays).forEach(range => {
-        const x = margin + labelWidth + (range.start - 1) * curDayWidth;
+        const x = margin + labelWidth + (range.start - startDay) * curDayWidth;
         const width = (range.end - range.start + 1) * curDayWidth;
         drawCell(pdf, x, y, width, roomHeight, range.end - range.start >= 2 ? labels.subject : "", {
           fill: "FFFFFF", textColor: "0F766E", fontSize: 6, fontStyle: "italic"
@@ -301,13 +301,16 @@
       const fill = HOTEL_FILLS[hotelIndex % HOTEL_FILLS.length];
       const hotelMonths = (Array.isArray(hotel.months) && hotel.months.length)
         ? hotel.months
-        : [{ year: defaultYear, month: defaultMonth, rooms: hotel.rooms || [] }];
+        : [{ year: defaultYear, month: defaultMonth, startDay: hotel.startDay || 1, rooms: hotel.rooms || [] }];
 
       hotelMonths.forEach((monthData, monthIndex) => {
         const curYear = Number(monthData.year);
         const curMonth = Number(monthData.month);
         const curDaysInMonth = new Date(Date.UTC(curYear, curMonth + 1, 0)).getUTCDate();
-        const curDayWidth = (contentWidth - labelWidth) / curDaysInMonth;
+        const startDay = Math.max(1, Math.min(curDaysInMonth + 1, Number(monthData.startDay) || 1));
+        const visibleDayCount = Math.max(0, curDaysInMonth - startDay + 1);
+        if (!visibleDayCount) return;
+        const curDayWidth = (contentWidth - labelWidth) / visibleDayCount;
         const monthName = MONTH_NAMES[curMonth] || "";
         const monthTitleText = isAr
           ? `تقويم إيقاف البيع - ${MONTH_NAMES_AR[curMonth] || monthName} ${curYear}`
@@ -323,15 +326,15 @@
         }
 
         drawMonthTitle(monthTitleText, false);
-        drawHotelHeader(hotel.name || "Hotel", fill, curYear, curMonth, curDaysInMonth, curDayWidth, false);
+        drawHotelHeader(hotel.name || "Hotel", fill, curYear, curMonth, startDay, curDaysInMonth, curDayWidth, false);
 
         rooms.forEach(room => {
           if (y + roomHeight + (monthIndex === hotelMonths.length - 1 ? separatorHeight : 0) > bottomLimit) {
             newPage();
             drawMonthTitle(monthTitleText, true);
-            drawHotelHeader(hotel.name || "Hotel", fill, curYear, curMonth, curDaysInMonth, curDayWidth, true);
+            drawHotelHeader(hotel.name || "Hotel", fill, curYear, curMonth, startDay, curDaysInMonth, curDayWidth, true);
           }
-          drawRoom(room, fill, curDaysInMonth, curDayWidth);
+          drawRoom(room, fill, startDay, curDaysInMonth, curDayWidth);
         });
 
         if (monthIndex < hotelMonths.length - 1) {
@@ -414,13 +417,15 @@
     }
 
     const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    const startDay = Math.max(1, Math.min(daysInMonth + 1, Number(options.startDay) || 1));
+    const visibleDayCount = Math.max(1, daysInMonth - startDay + 1);
     const pdf = new JsPDF({ orientation: "landscape", unit: "mm", format: "a3", compress: true });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 8;
     const contentWidth = pageWidth - margin * 2;
     const labelWidth = 94;
-    const dayWidth = (contentWidth - labelWidth) / daysInMonth;
+    const dayWidth = (contentWidth - labelWidth) / visibleDayCount;
     const sectionHeaderHeight = 7.5;
     const weekdayHeight = 6.5;
     const dateHeight = 5.5;
@@ -539,8 +544,8 @@
       drawCell(pdf, margin, y, labelWidth, weekdayHeight + dateHeight, labels.hotelHeader, {
         fill: "FDF7EC", textColor: "6F1028", fontSize: 8.5, fontStyle: "bold"
       });
-      for (let day = 1; day <= daysInMonth; day += 1) {
-        const x = margin + labelWidth + (day - 1) * dayWidth;
+      for (let day = startDay; day <= daysInMonth; day += 1) {
+        const x = margin + labelWidth + (day - startDay) * dayWidth;
         const date = new Date(Date.UTC(year, month, day));
         drawCell(pdf, x, y, dayWidth, weekdayHeight, WEEKDAYS[date.getUTCDay()], {
           fill: "FDF7EC", textColor: "420817", fontSize: 7.0, fontStyle: "bold"
@@ -557,7 +562,7 @@
       const fill = HOTEL_FILLS[hotelIndex % HOTEL_FILLS.length];
       const stopDays = new Set((hotelItem.stopDays || []).map(Number));
       const subjectDays = new Set((hotelItem.subjectDays || []).map(Number));
-      const availableDays = [...subjectDays].filter(day => day >= 1 && day <= daysInMonth && !stopDays.has(day));
+      const availableDays = [...subjectDays].filter(day => day >= startDay && day <= daysInMonth && !stopDays.has(day));
 
       drawCell(pdf, margin, y, labelWidth, hotelRowHeight, hotelItem.hotelName || "Hotel", {
         fill: fill,
@@ -566,15 +571,15 @@
         align: "left"
       });
 
-      for (let day = 1; day <= daysInMonth; day += 1) {
-        const x = margin + labelWidth + (day - 1) * dayWidth;
+      for (let day = startDay; day <= daysInMonth; day += 1) {
+        const x = margin + labelWidth + (day - startDay) * dayWidth;
         drawCell(pdf, x, y, dayWidth, hotelRowHeight, "", {
           fill: stopDays.has(day) ? "FF0000" : "FFFFFF"
         });
       }
 
       ranges(availableDays).forEach(range => {
-        const x = margin + labelWidth + (range.start - 1) * dayWidth;
+        const x = margin + labelWidth + (range.start - startDay) * dayWidth;
         const width = (range.end - range.start + 1) * dayWidth;
         drawCell(pdf, x, y, width, hotelRowHeight, range.end - range.start >= 2 ? labels.subject : "", {
           fill: "FFFFFF", textColor: "0F766E", fontSize: 5.8, fontStyle: "italic"
@@ -688,13 +693,15 @@
     }
 
     const daysInMonth     = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    const startDay        = Math.max(1, Math.min(daysInMonth + 1, Number(options.startDay) || 1));
+    const visibleDayCount = Math.max(1, daysInMonth - startDay + 1);
     const pdf             = new JsPDF({ orientation: "landscape", unit: "mm", format: "a3", compress: true });
     const pageWidth       = pdf.internal.pageSize.getWidth();
     const pageHeight      = pdf.internal.pageSize.getHeight();
     const margin          = 8;
     const contentWidth    = pageWidth - margin * 2;
     const labelWidth      = 94;
-    const dayWidth        = (contentWidth - labelWidth) / daysInMonth;
+    const dayWidth        = (contentWidth - labelWidth) / visibleDayCount;
     const weekdayHeight   = 7;
     const dateHeight      = 6;
     const roomHeight      = 7.2;
@@ -818,8 +825,8 @@
       drawCell(pdf, margin, y, labelWidth, weekdayHeight + dateHeight, title, {
         fill, fontSize: 9.2, fontStyle: "bold", textColor: "1A4D2E"
       });
-      for (let day = 1; day <= daysInMonth; day += 1) {
-        const x    = margin + labelWidth + (day - 1) * dayWidth;
+      for (let day = startDay; day <= daysInMonth; day += 1) {
+        const x    = margin + labelWidth + (day - startDay) * dayWidth;
         const date = new Date(Date.UTC(year, month, day));
         drawCell(pdf, x, y, dayWidth, weekdayHeight, WEEKDAYS[date.getUTCDay()], {
           fill, fontSize: 7.2, fontStyle: "bold", textColor: "1A4D2E"
@@ -845,8 +852,8 @@
       });
 
       // Colour every day individually
-      for (let day = 1; day <= daysInMonth; day += 1) {
-        const x = margin + labelWidth + (day - 1) * dayWidth;
+      for (let day = startDay; day <= daysInMonth; day += 1) {
+        const x = margin + labelWidth + (day - startDay) * dayWidth;
         if (stopDays.has(day)) {
           drawCell(pdf, x, y, dayWidth, roomHeight, "", { fill: RED_FILL });
         } else if (subjectDays.has(day)) {
@@ -857,9 +864,9 @@
       }
 
       // Text label over wider subject ranges
-      ranges([...subjectDays].filter(d => d >= 1 && d <= daysInMonth && !stopDays.has(d))).forEach(range => {
+      ranges([...subjectDays].filter(d => d >= startDay && d <= daysInMonth && !stopDays.has(d))).forEach(range => {
         if (range.end - range.start >= 2) {
-          const x     = margin + labelWidth + (range.start - 1) * dayWidth;
+          const x     = margin + labelWidth + (range.start - startDay) * dayWidth;
           const width = (range.end - range.start + 1) * dayWidth;
           pdf.setFont("helvetica", "italic");
           pdf.setFontSize(5.5);

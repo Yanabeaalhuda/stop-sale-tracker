@@ -104,7 +104,7 @@
     const merges = [];
     const rows = [];
     let row = 0;
-    let maxColUsed = 31;
+    let maxColUsed = 1;
 
     hotels.forEach((hotel, hotelIndex) => {
       const hotelFill = HOTEL_FILLS[hotelIndex % HOTEL_FILLS.length];
@@ -161,13 +161,16 @@
 
       const hotelMonths = (Array.isArray(hotel.months) && hotel.months.length)
         ? hotel.months
-        : [{ year: defaultYear, month: defaultMonth, rooms: hotel.rooms || [] }];
+        : [{ year: defaultYear, month: defaultMonth, startDay: hotel.startDay || 1, rooms: hotel.rooms || [] }];
 
       hotelMonths.forEach((monthData, monthIndex) => {
         const curYear = Number(monthData.year);
         const curMonth = Number(monthData.month);
         const curDaysInMonth = new Date(Date.UTC(curYear, curMonth + 1, 0)).getUTCDate();
-        if (curDaysInMonth > maxColUsed) maxColUsed = curDaysInMonth;
+        const startDay = Math.max(1, Math.min(curDaysInMonth + 1, Number(monthData.startDay) || 1));
+        const visibleDayCount = Math.max(0, curDaysInMonth - startDay + 1);
+        if (!visibleDayCount) return;
+        if (visibleDayCount > maxColUsed) maxColUsed = visibleDayCount;
 
         const monthLabel = `${MONTH_NAMES_EN[curMonth]} ${curYear}`;
         const headerTitle = hotelMonths.length > 1
@@ -177,8 +180,8 @@
         setCell(sheet, row, 0, headerTitle, hotelStyle);
         merges.push({ s: { r: row, c: 0 }, e: { r: row + 1, c: 0 } });
 
-        for (let day = 1; day <= curDaysInMonth; day += 1) {
-          const col = day;
+        for (let day = startDay; day <= curDaysInMonth; day += 1) {
+          const col = day - startDay + 1;
           const serial = excelSerial(curYear, curMonth, day);
           const dateAddress = XLSX.utils.encode_cell({ r: row + 1, c: col });
           setCell(sheet, row, col, serial, weekdayStyle, { f: dateAddress, z: "ddd" });
@@ -201,28 +204,31 @@
         regularRooms.concat(allRoomsEntry).forEach(roomData => {
           const stopSet = new Set((roomData.stopDays || []).map(Number));
           const subjectSet = new Set((roomData.subjectDays || []).map(Number));
-          const hasSubject = [...subjectSet].some(day => day >= 1 && day <= curDaysInMonth && !stopSet.has(day));
+          const hasSubject = [...subjectSet].some(day => day >= startDay && day <= curDaysInMonth && !stopSet.has(day));
           const baseName = roomData.isAllRooms ? labels.allRooms : (roomData.name || "Room Type");
           const label = hasSubject && !roomData.isAllRooms
             ? `${baseName} (${labels.subject})`
             : baseName;
 
           setCell(sheet, row, 0, label, roomData.isAllRooms ? allRoomsLabelStyle : roomLabelStyle);
-          for (let day = 1; day <= curDaysInMonth; day += 1) {
+          for (let day = startDay; day <= curDaysInMonth; day += 1) {
+            const col = day - startDay + 1;
             const isStop = stopSet.has(day);
             const isSubject = !isStop && subjectSet.has(day);
-            setCell(sheet, row, day, null, isStop ? stopStyle : (isSubject ? subjectStyle : openStyle));
+            setCell(sheet, row, col, null, isStop ? stopStyle : (isSubject ? subjectStyle : openStyle));
           }
 
-          const availableDays = [...subjectSet].filter(day => day >= 1 && day <= curDaysInMonth && !stopSet.has(day));
+          const availableDays = [...subjectSet].filter(day => day >= startDay && day <= curDaysInMonth && !stopSet.has(day));
           consecutiveRanges(availableDays).forEach(range => {
-            const anchor = XLSX.utils.encode_cell({ r: row, c: range.start });
+            const startCol = range.start - startDay + 1;
+            const endCol = range.end - startDay + 1;
+            const anchor = XLSX.utils.encode_cell({ r: row, c: startCol });
             sheet[anchor].t = "s";
             sheet[anchor].v = labels.subject;
             sheet[anchor].s = subjectStyle;
-            if (range.end > range.start) {
-              merges.push({ s: { r: row, c: range.start }, e: { r: row, c: range.end } });
-              for (let col = range.start + 1; col <= range.end; col += 1) {
+            if (endCol > startCol) {
+              merges.push({ s: { r: row, c: startCol }, e: { r: row, c: endCol } });
+              for (let col = startCol + 1; col <= endCol; col += 1) {
                 delete sheet[XLSX.utils.encode_cell({ r: row, c: col })];
               }
             }

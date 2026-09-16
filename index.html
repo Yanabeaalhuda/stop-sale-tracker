@@ -130,6 +130,8 @@
   .cal-day.past{opacity:.45}
   .cal-day.past.stop::before{background:#c98891}
   .cal-day.past.subject::before{background:#78aaa5}
+  .report-export-option{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:#fffdf9;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;user-select:none}
+  .report-export-option input{width:16px;height:16px;accent-color:var(--burgundy);cursor:pointer}
   .cal-day:hover:not(.empty){box-shadow:inset 0 0 0 2px var(--gold);z-index:2}
   .cal-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-size:12.5px;color:var(--muted);align-items:center}
   .cal-legend .swatch{width:13px;height:13px;border-radius:4px;display:inline-block;margin-right:6px;vertical-align:middle}
@@ -254,6 +256,12 @@
         </button>
       </div>
     </div>
+    <div style="display:flex;justify-content:flex-end;margin:-2px 0 12px;">
+      <label class="report-export-option">
+        <input id="includePastReports" type="checkbox">
+        <span data-i18n="includePastReports">Include previous periods in all reports</span>
+      </label>
+    </div>
     <div class="cal-controls">
       <label class="cal-field">
         <span data-i18n="hotelLabel">Hotel</span>
@@ -367,6 +375,26 @@ function fmtDayNumber(dayNum){
 
 let currentLang = localStorage.getItem("lang_stopsale") || "en";
 let today = todayDayNumber();
+
+function getIncludePastReports(){
+  const checkbox = document.getElementById("includePastReports");
+  return !!(checkbox && checkbox.checked);
+}
+function isReportDayIncluded(dayNum, includePast = getIncludePastReports()){
+  return includePast || Number(dayNum) >= today;
+}
+function getReportStartDayForMonth(year, month, includePast = getIncludePastReports()){
+  if(includePast) return 1;
+  const firstDayNum = Math.round(Date.UTC(year, month, 1) / MS_PER_DAY);
+  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const lastDayNum = firstDayNum + daysInMonth - 1;
+  if(lastDayNum < today) return daysInMonth + 1;
+  if(firstDayNum >= today) return 1;
+  const todayDate = dayNumberToDate(today);
+  return todayDate.getUTCFullYear() === Number(year) && todayDate.getUTCMonth() === Number(month)
+    ? todayDate.getUTCDate()
+    : 1;
+}
 
 const DATA_FOLDER = "data";
 const DATA_URL_FALLBACK = "data/stop-sale.xlsx"; // used if folder auto-discovery isn't possible
@@ -777,6 +805,8 @@ const t = {
     exportPDF:"Export PDF",
     exportCalendar:"Export Calendar",downloadStopSale:"Download Stop Sale Excel",downloadStopSalePdf:"Download Stop Sale PDF",downloadRoomStopSalePdf:"Download Room PDF Report",downloadAvailabilityPdf:"Download Availability PDF",
     noExportData:"No data available to export.",
+    includePastReports:"Include previous periods in all reports",
+    pastStatus:"Past period",
     waitingStops:"Waiting List Stops",
     waitingList:"Waiting List"
   },
@@ -822,6 +852,8 @@ const t = {
     exportPDF:"تصدير ملف PDF",
     exportCalendar:"تصدير التقويم",downloadStopSale:"تحميل إيقاف البيع Excel",downloadStopSalePdf:"تحميل إيقاف البيع PDF",downloadRoomStopSalePdf:"تحميل تقرير الغرف (PDF)",downloadAvailabilityPdf:"تحميل تقرير الإتاحة (PDF)",
     noExportData:"لا توجد بيانات متاحة للتصدير.",
+    includePastReports:"تضمين الفترات السابقة في جميع التقارير",
+    pastStatus:"فترة سابقة",
     waitingStops:"إيقافات قائمة الانتظار",
     waitingList:"قائمة الانتظار"
   }
@@ -1081,7 +1113,7 @@ function parseWorkbook(wb, fileLabel, stats){
 /* ============================================================
    RANGE BUILDING (for the list view — future dates only)
    ============================================================ */
-function buildRanges(){
+function buildRanges(includePast = false){
   const out = {};
   const toRanges = (days, kind) => {
     const ranges = [];
@@ -1098,8 +1130,8 @@ function buildRanges(){
     out[hotel] = {};
     Object.keys(hotelData[hotel]).forEach(key=>{
       const entry = hotelData[hotel][key];
-      const stopDays = [...effectiveDayNumbers(hotel, key)].filter(d=>d >= today).sort((a,b)=>a-b);
-      const availabilityDays = [...effectiveAvailabilityDayNumbers(hotel, key)].filter(d=>d >= today).sort((a,b)=>a-b);
+      const stopDays = [...effectiveDayNumbers(hotel, key)].filter(d=>includePast || d >= today).sort((a,b)=>a-b);
+      const availabilityDays = [...effectiveAvailabilityDayNumbers(hotel, key)].filter(d=>includePast || d >= today).sort((a,b)=>a-b);
       const ranges = [
         ...toRanges(stopDays, "stop"),
         ...toRanges(availabilityDays, "subject")
@@ -1653,12 +1685,9 @@ function escapeHTML(v){return String(v||"").replace(/[&<>"']/g,m=>({"&":"&amp;",
 function hashCode(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h<<5)-h+s.charCodeAt(i); h|=0; } return h; }
 
 function getRangeStatus(r) {
-  if (r.kind === 'subject') {
-    return 'subject';
-  }
-  if (r.start <= today) {
-    return 'active';
-  }
+  if (r.end < today) return 'past';
+  if (r.kind === 'subject') return 'subject';
+  if (r.start <= today) return 'active';
   return 'upcoming';
 }
 
@@ -1667,15 +1696,18 @@ function getOverallStatus(ranges) {
   let hasActive = false;
   let hasUpcoming = false;
   let hasSubject = false;
+  let hasPast = false;
   ranges.forEach(r => {
     const status = getRangeStatus(r);
     if (status === 'active') hasActive = true;
     else if (status === 'upcoming') hasUpcoming = true;
     else if (status === 'subject') hasSubject = true;
+    else if (status === 'past') hasPast = true;
   });
   if (hasActive) return 'active';
   if (hasUpcoming) return 'upcoming';
   if (hasSubject) return 'subject';
+  if (hasPast) return 'past';
   return 'clear';
 }
 
@@ -1845,7 +1877,7 @@ function getRoomStyle(roomName) {
   return "color: #2d3748; font-weight: 600;";
 }
 
-function buildTemplateExportHotels(defaultYear, defaultMonth){
+function buildTemplateExportHotels(defaultYear, defaultMonth, includePast = getIncludePastReports()){
   const targetYear = (defaultYear !== undefined && defaultYear !== null) ? defaultYear : calYear;
   const targetMonth = (defaultMonth !== undefined && defaultMonth !== null) ? defaultMonth : calMonth;
 
@@ -1857,6 +1889,7 @@ function buildTemplateExportHotels(defaultYear, defaultMonth){
     // Discover all distinct months (year, month) that have stop sales, subject availability, or days defined in sheet
     const monthMap = new Map();
     const addDateNum = dayNum => {
+      if(!isReportDayIncluded(dayNum, includePast)) return;
       const date = dayNumberToDate(Number(dayNum));
       const y = date.getUTCFullYear();
       const m = date.getUTCMonth();
@@ -1871,14 +1904,19 @@ function buildTemplateExportHotels(defaultYear, defaultMonth){
     });
 
     if (monthMap.size === 0 && targetYear !== null && targetMonth !== null) {
-      const k = `${targetYear}-${String(targetMonth).padStart(2, '0')}`;
-      monthMap.set(k, { year: targetYear, month: targetMonth });
+      const startDay = getReportStartDayForMonth(targetYear, targetMonth, includePast);
+      const daysInTargetMonth = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
+      if(startDay <= daysInTargetMonth){
+        const k = `${targetYear}-${String(targetMonth).padStart(2, '0')}`;
+        monthMap.set(k, { year: targetYear, month: targetMonth });
+      }
     }
 
     const sortedMonths = Array.from(monthMap.values()).sort((a, b) => (a.year * 12 + a.month) - (b.year * 12 + b.month));
 
     const buildRoomsForMonth = (y, m) => {
       const toMonthDay = dayNum => {
+        if(!isReportDayIncluded(dayNum, includePast)) return null;
         const date = dayNumberToDate(Number(dayNum));
         return date.getUTCFullYear() === y && date.getUTCMonth() === m
           ? date.getUTCDate()
@@ -1907,18 +1945,22 @@ function buildTemplateExportHotels(defaultYear, defaultMonth){
     const months = sortedMonths.map(m => ({
       year: m.year,
       month: m.month,
+      startDay: getReportStartDayForMonth(m.year, m.month, includePast),
       daysInMonth: new Date(Date.UTC(m.year, m.month + 1, 0)).getUTCDate(),
       rooms: buildRoomsForMonth(m.year, m.month)
-    }));
+    })).filter(m => m.startDay <= m.daysInMonth);
 
-    const fallbackYear = targetYear !== null ? targetYear : (sortedMonths[0] ? sortedMonths[0].year : new Date().getFullYear());
-    const fallbackMonth = targetMonth !== null ? targetMonth : (sortedMonths[0] ? sortedMonths[0].month : new Date().getMonth());
+    const fallbackMonthData = months[0] || null;
+    const fallbackYear = targetYear !== null ? targetYear : (fallbackMonthData ? fallbackMonthData.year : dayNumberToDate(today).getUTCFullYear());
+    const fallbackMonth = targetMonth !== null ? targetMonth : (fallbackMonthData ? fallbackMonthData.month : dayNumberToDate(today).getUTCMonth());
     const defaultRooms = buildRoomsForMonth(fallbackYear, fallbackMonth);
+    const defaultStartDay = getReportStartDayForMonth(fallbackYear, fallbackMonth, includePast);
 
     return {
       name: hotel,
       months,
-      rooms: defaultRooms
+      rooms: defaultRooms,
+      startDay: defaultStartDay
     };
   });
 }
@@ -1950,11 +1992,13 @@ function exportStopSaleCalendar(){
     return;
   }
   try {
+    const includePast = getIncludePastReports();
     StopSaleExporter.download({
       year: calYear,
       month: calMonth,
       language: currentLang,
-      hotels: buildTemplateExportHotels(calYear, calMonth)
+      includePast,
+      hotels: buildTemplateExportHotels(calYear, calMonth, includePast)
     });
   } catch (error) {
     console.error("Failed to export template-style stop-sale workbook", error);
@@ -1964,8 +2008,8 @@ function exportStopSaleCalendar(){
   }
 }
 
-function buildTemplateExportRooms(year, month) {
-  const hotels = buildTemplateExportHotels(year, month);
+function buildTemplateExportRooms(year, month, includePast = getIncludePastReports()) {
+  const hotels = buildTemplateExportHotels(year, month, includePast);
   const roomMap = new Map();
 
   hotels.forEach(hotel => {
@@ -2002,13 +2046,15 @@ function exportStopSaleCalendarPdf(){
     return;
   }
   try {
+    const includePast = getIncludePastReports();
     const logo = document.getElementById("brandLogo");
     const logoData = (logo && logo.style.display !== "none") ? getBase64Image(logo) : "";
     StopSalePdfExporter.download({
       year: calYear,
       month: calMonth,
       language: currentLang,
-      hotels: buildTemplateExportHotels(calYear, calMonth),
+      includePast,
+      hotels: buildTemplateExportHotels(calYear, calMonth, includePast),
       metrics: getTemplateReportMetrics(),
       generatedAt: getFormattedDateTime(),
       logoData: /^data:image\//i.test(logoData) ? logoData : ""
@@ -2027,13 +2073,16 @@ function exportRoomStopSaleCalendarPdf(){
     return;
   }
   try {
+    const includePast = getIncludePastReports();
     const logo = document.getElementById("brandLogo");
     const logoData = (logo && logo.style.display !== "none") ? getBase64Image(logo) : "";
     StopSalePdfExporter.downloadByRoom({
       year: calYear,
       month: calMonth,
       language: currentLang,
-      rooms: buildTemplateExportRooms(calYear, calMonth),
+      includePast,
+      startDay: getReportStartDayForMonth(calYear, calMonth, includePast),
+      rooms: buildTemplateExportRooms(calYear, calMonth, includePast),
       metrics: getTemplateReportMetrics(),
       generatedAt: getFormattedDateTime(),
       logoData: /^data:image\//i.test(logoData) ? logoData : ""
@@ -2052,9 +2101,10 @@ function exportAvailabilityCalendarPdf(){
     return;
   }
   try {
+    const includePast = getIncludePastReports();
     const logo = document.getElementById("brandLogo");
     const logoData = (logo && logo.style.display !== "none") ? getBase64Image(logo) : "";
-    const hotelsArr = buildTemplateExportHotels(calYear, calMonth);
+    const hotelsArr = buildTemplateExportHotels(calYear, calMonth, includePast);
     let notAvailableDays = 0;
     let totalSubjectDays = 0;
     hotelsArr.forEach(hotel => {
@@ -2067,6 +2117,8 @@ function exportAvailabilityCalendarPdf(){
       year: calYear,
       month: calMonth,
       language: currentLang,
+      includePast,
+      startDay: getReportStartDayForMonth(calYear, calMonth, includePast),
       hotels: hotelsArr,
       metrics: {
         totalHotels:  Object.keys(hotelData).length,
@@ -2097,7 +2149,8 @@ function exportReport(format) {
 
   const query = normalize(document.getElementById("hotelSearch").value);
   const onlyAffectedFlag = document.getElementById("onlyAffected").checked;
-  const ranges = buildRanges();
+  const includePast = getIncludePastReports();
+  const ranges = buildRanges(includePast);
   const hotelNames = Object.keys(ranges).sort((a,b)=>a.localeCompare(b));
 
   const filteredData = [];
@@ -2132,7 +2185,9 @@ function exportReport(format) {
           ? t[currentLang].active
           : overallRoomStatus === 'upcoming'
             ? t[currentLang].upcoming
-            : t[currentLang].subjectAvailability;
+            : overallRoomStatus === 'past'
+              ? t[currentLang].pastStatus
+              : t[currentLang].subjectAvailability;
 
         filteredData.push({
           hotel: hotel,
@@ -2291,9 +2346,12 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
   let tableRows = data.map((item, idx) => {
     const isStop = item.ranges && item.ranges.some(r => r.status === 'active' || r.status === 'upcoming');
     const isSubject = item.ranges && item.ranges.some(r => r.status === 'subject');
+    const isPast = item.ranges && item.ranges.some(r => r.status === 'past');
     
     let statusStyle = "";
-    if (isStop) {
+    if (item.status === t[currentLang].pastStatus) {
+      statusStyle = "background: #f3f4f6; color: #6b7280; border: 1px solid rgba(107,114,128,0.28);";
+    } else if (isStop) {
       if (item.status === t[currentLang].active) {
         statusStyle = "background: #fdf2f2; color: #9b1c1c; border: 1px solid rgba(155,28,28,0.25);";
       } else {
@@ -2301,6 +2359,8 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
       }
     } else if (isSubject) {
       statusStyle = "background: #e6f7f4; color: #0f766e; border: 1px solid rgba(15,118,110,0.3);";
+    } else if (isPast) {
+      statusStyle = "background: #f3f4f6; color: #6b7280; border: 1px solid rgba(107,114,128,0.28);";
     } else {
       statusStyle = "background: #ecfdf5; color: #065f46; border: 1px solid rgba(6,95,70,0.25);";
     }
@@ -2313,6 +2373,8 @@ function exportPNGReport(data, totalHotels, activeCount, upcomingCount, timestam
             chipStyle = "background: #e6f7f4; color: #0f766e; border: 1px solid rgba(15,118,110,0.25);";
           } else if (r.status === 'active') {
             chipStyle = "background: #fdf2f2; color: #9b1c1c; border: 1px solid rgba(155,28,28,0.2);";
+          } else if (r.status === 'past') {
+            chipStyle = "background: #f3f4f6; color: #6b7280; border: 1px solid rgba(107,114,128,0.22);";
           } else {
             chipStyle = "background: #fff8e6; color: #b25e00; border: 1px solid rgba(178,94,0,0.2);";
           }
@@ -2456,9 +2518,12 @@ function exportPDFReport(data, totalHotels, activeCount, upcomingCount, timestam
   let tableRows = data.map((item, idx) => {
     const isStop = item.ranges && item.ranges.some(r => r.status === 'active' || r.status === 'upcoming');
     const isSubject = item.ranges && item.ranges.some(r => r.status === 'subject');
+    const isPast = item.ranges && item.ranges.some(r => r.status === 'past');
     
     let statusStyle = "";
-    if (isStop) {
+    if (item.status === t[currentLang].pastStatus) {
+      statusStyle = "background: #f3f4f6; color: #6b7280; border: 1px solid rgba(107,114,128,0.28);";
+    } else if (isStop) {
       if (item.status === t[currentLang].active) {
         statusStyle = "background: #fdf2f2; color: #9b1c1c; border: 1px solid rgba(155,28,28,0.25);";
       } else {
@@ -2466,6 +2531,8 @@ function exportPDFReport(data, totalHotels, activeCount, upcomingCount, timestam
       }
     } else if (isSubject) {
       statusStyle = "background: #e6f7f4; color: #0f766e; border: 1px solid rgba(15,118,110,0.3);";
+    } else if (isPast) {
+      statusStyle = "background: #f3f4f6; color: #6b7280; border: 1px solid rgba(107,114,128,0.28);";
     } else {
       statusStyle = "background: #ecfdf5; color: #065f46; border: 1px solid rgba(6,95,70,0.25);";
     }
@@ -2477,6 +2544,8 @@ function exportPDFReport(data, totalHotels, activeCount, upcomingCount, timestam
             chipStyle = "background: #e6f7f4; color: #0f766e; border: 1px solid rgba(15,118,110,0.25);";
           } else if (r.status === 'active') {
             chipStyle = "background: #fdf2f2; color: #9b1c1c; border: 1px solid rgba(155,28,28,0.2);";
+          } else if (r.status === 'past') {
+            chipStyle = "background: #f3f4f6; color: #6b7280; border: 1px solid rgba(107,114,128,0.22);";
           } else {
             chipStyle = "background: #fff8e6; color: #b25e00; border: 1px solid rgba(178,94,0,0.2);";
           }
@@ -2570,6 +2639,7 @@ function exportCalendarReport() {
   }
 
   const isAr = currentLang === 'ar';
+  const includePast = getIncludePastReports();
   const logo = document.getElementById("brandLogo");
   const logoSrc = (logo && logo.style.display !== 'none') ? getBase64Image(logo) : '';
 
@@ -2640,6 +2710,18 @@ function exportCalendarReport() {
 
   const originalCalShell = document.querySelector(".cal-shell");
   const calShellClone = originalCalShell.cloneNode(true);
+  if(!includePast){
+    calShellClone.querySelectorAll(".cal-day.past").forEach(dayEl => {
+      dayEl.className = "cal-day empty";
+      dayEl.innerHTML = "";
+      dayEl.removeAttribute("title");
+      dayEl.removeAttribute("onclick");
+      dayEl.removeAttribute("onkeydown");
+      dayEl.removeAttribute("tabindex");
+      dayEl.removeAttribute("role");
+      dayEl.removeAttribute("aria-label");
+    });
+  }
   
   calShellClone.style.margin = "0";
   calShellClone.style.width = "100%";
@@ -2666,10 +2748,10 @@ function exportCalendarReport() {
         <span style="width: 14px; height: 14px; border-radius: 4px; display: inline-block; background: #fff; border: 1px solid var(--border);"></span>
         <span>${t[currentLang].legendOpen}</span>
       </span>
-      <span style="display: inline-flex; align-items: center; gap: 6px;">
+      ${includePast ? `<span style="display: inline-flex; align-items: center; gap: 6px;">
         <span style="width: 14px; height: 14px; border-radius: 4px; display: inline-block; background: #faf7f2; border: 1px solid var(--border);"></span>
         <span>${t[currentLang].legendPast}</span>
-      </span>
+      </span>` : ""}
       <span style="display: inline-flex; align-items: center; gap: 6px;">
         <span style="width: 14px; height: 14px; border-radius: 4px; display: inline-block; background: var(--gold);"></span>
         <span>${t[currentLang].legendToday}</span>
