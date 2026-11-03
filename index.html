@@ -187,6 +187,80 @@
     .cal-day .cal-tag{font-size:8px;padding:1px 3px}
     .cal-legend{gap:10px;font-size:11px}
   }
+
+  /* File Update Center & Changelog Styles */
+  .upload-center-card{border-top:4px solid var(--gold)}
+  .upload-card-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+  .upload-card-desc{margin:4px 0 0;color:var(--muted);font-size:13px}
+  .upload-head-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn-primary-upload{background:var(--burgundy);color:#fff;border-radius:10px;padding:9px 16px;font-weight:bold;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:8px;border:0;box-shadow:0 2px 6px rgba(111,16,40,.2);transition:opacity .15s}
+  .btn-primary-upload:hover{opacity:.9}
+  .btn-refresh-repo{background:#fff;color:var(--burgundy);border:1px solid var(--burgundy);border-radius:10px;padding:8px 14px;font-weight:bold;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:6px;transition:background .15s}
+  .btn-refresh-repo:hover{background:#fff3e0}
+
+  .changelog-card{border-top:4px solid var(--burgundy);position:relative}
+  .changelog-top-bar{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:16px}
+  .changelog-title-group{flex:1;min-width:260px}
+  .changelog-main-icon{font-size:24px;line-height:1}
+  .changelog-badge-count{background:var(--gold);color:#2b1a02;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;margin-inline-start:6px;display:inline-block}
+  .changelog-desc{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+  .changelog-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn-copy-summary{background:var(--green);color:#fff;border:0;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:bold;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 2px 6px rgba(8,122,54,.25);transition:all .15s ease}
+  .btn-copy-summary:hover{background:#06622b;transform:translateY(-1px)}
+  .btn-clear-log{background:#fff;color:#777;border:1px solid #ddd;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:bold;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s ease}
+  .btn-clear-log:hover{background:#fdf0f0;color:var(--red);border-color:var(--red)}
+
+  .changelog-filters{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding:10px 14px;background:#fdfbf7;border:1px solid var(--border);border-radius:14px;margin-bottom:16px}
+  .filter-pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill-btn{background:#fff;border:1px solid #ddd;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:bold;color:#444;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s ease}
+  .pill-btn.active{background:var(--burgundy);color:#fff;border-color:var(--burgundy)}
+  .pill-btn:hover:not(.active){background:#f7f3ee}
+  .dot-indicator{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .dot-indicator.red{background:var(--red)}
+  .dot-indicator.green{background:var(--green)}
+  .changelog-hotel-filter select{padding:6px 12px;font-size:13px;border-radius:10px;border:1px solid #ddd;background:#fff;min-width:170px}
+
+  .changelog-container{display:flex;flex-direction:column;gap:14px}
+  .changelog-entry{border:1px solid var(--border);border-radius:16px;background:#fff;overflow:hidden;box-shadow:0 3px 12px rgba(70,30,20,.04);transition:all .2s ease}
+  .changelog-entry.latest{border:2px solid var(--gold);box-shadow:0 6px 20px rgba(212,175,98,.25)}
+  .changelog-entry-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding:14px 18px;background:#fdfaf4;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+  .entry-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .entry-time{font-weight:bold;font-size:14px;color:var(--burgundy)}
+  .entry-file-tag{background:#fff;border:1px solid var(--border);color:#555;font-size:11px;font-weight:bold;padding:3px 8px;border-radius:6px}
+  .entry-badge-latest{background:var(--gold);color:#2b1a02;font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px}
+  .entry-stats{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .stat-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:bold;padding:4px 9px;border-radius:999px}
+  .stat-chip.closed{background:#fdeceb;color:var(--red);border:1px solid rgba(176,0,32,.25)}
+  .stat-chip.opened{background:#eafaf0;color:var(--green);border:1px solid rgba(8,122,54,.25)}
+  .stat-chip.subject{background:#e6f7f4;color:#0f766e;border:1px solid rgba(15,118,110,.25)}
+  .entry-single-copy-btn{background:#fff;color:var(--burgundy);border:1px solid rgba(111,16,40,.3);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:bold;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:.15s}
+  .entry-single-copy-btn:hover{background:#f9edf0}
+
+  .changelog-entry-body{padding:16px 18px}
+  .changelog-entry-body.collapsed{display:none}
+  .changelog-hotel-block{margin-bottom:14px}
+  .changelog-hotel-block:last-child{margin-bottom:0}
+  .changelog-hotel-title{font-size:15px;font-weight:bold;color:var(--burgundy);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+
+  .change-box{border-radius:12px;padding:12px 14px;margin-bottom:10px}
+  .change-box:last-child{margin-bottom:0}
+  .change-box.closed{background:#fff5f5;border:1px solid rgba(176,0,32,.18)}
+  .change-box.opened{background:#f2faf5;border:1px solid rgba(8,122,54,.18)}
+  .change-box.subject{background:#f0f9f8;border:1px solid rgba(15,118,110,.18)}
+  .change-box-head{font-size:13px;font-weight:bold;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .change-box.closed .change-box-head{color:var(--red)}
+  .change-box.opened .change-box-head{color:var(--green)}
+  .change-box.subject .change-box-head{color:#0f766e}
+  .change-items-list{display:flex;flex-direction:column;gap:6px}
+  .change-item{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;background:#fff;padding:8px 12px;border-radius:8px;border:1px solid rgba(0,0,0,.06)}
+  .change-room-name{font-weight:bold;font-size:13px;color:#222}
+  .change-range-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:bold}
+  .change-nights-badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#f4f4f4;color:#555}
+  .changelog-empty{padding:30px 16px;text-align:center;color:var(--muted);font-size:14px}
+  .changelog-empty .empty-icon{font-size:36px;margin-bottom:8px}
+
+  .toast-notification{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#240a10;color:#fff;padding:12px 24px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.35);border:1px solid var(--gold);font-weight:bold;font-size:13px;z-index:10000;display:flex;align-items:center;gap:8px;animation:toastIn .25s ease}
+  @keyframes toastIn{from{opacity:0;transform:translate(-50%,15px)}to{opacity:1;transform:translate(-50%,0)}}
 </style>
 </head>
 <body>
@@ -214,25 +288,92 @@
     <div class="card metric alert"><div class="label" data-i18n="activeStops">Active Stop Sales</div><div class="value" id="mActive">0</div></div>
     <div class="card metric"><div class="label" data-i18n="upcomingStops">Upcoming Stop Sales</div><div class="value" id="mUpcoming">0</div></div>
     <div class="card metric"><div class="label" data-i18n="dataStatus">Data Status</div><div class="value" id="mStatus">—</div></div>
+    <div class="card metric" id="mLogCard" style="cursor:pointer;border-inline-start:4px solid var(--gold);" onclick="scrollToChangelog()" title="Click to view change log">
+      <div class="label" data-i18n="recentUpdatesMetric">Latest Changes Log</div>
+      <div class="value" id="mLogCount" style="color:var(--burgundy);font-size:22px;">0</div>
+    </div>
   </section>
 
-  <section class="card" style="display:none">
-    <h2 data-i18n="dataSourceTitle">Data Source</h2>
+  <!-- FILE UPDATE & UPLOAD CENTER -->
+  <section class="card upload-center-card" id="uploadCenterCard">
+    <div class="upload-card-header">
+      <div>
+        <h2 style="margin:0;display:flex;align-items:center;gap:8px;">
+          <span>🔄</span> <span data-i18n="uploadCenterHeading">Update &amp; Upload Hotel Files</span>
+        </h2>
+        <p class="upload-card-desc" data-i18n="uploadCenterSub">
+          Upload updated hotel availability sheets (.xlsx) to instantly detect closed/reopened rooms and log all changes
+        </p>
+      </div>
+      <div class="upload-head-actions">
+        <button type="button" class="btn-primary-upload" onclick="document.getElementById('fileInput').click()">
+          <span>📤</span> <span data-i18n="uploadBtnLabel">Upload Hotel .xlsx</span>
+        </button>
+        <button type="button" class="btn-refresh-repo" onclick="loadFromRepo(true)">
+          <span>🔄</span> <span data-i18n="refreshBtn">Refresh from GitHub</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <div class="upload-icon">📂</div>
+      <div class="upload-title" data-i18n="uploadPrompt">Drag &amp; drop updated hotel Excel file here, or click to browse</div>
+      <div class="upload-sub" data-i18n="uploadSubText">Supported: .xlsx, .xls — Updates hotel availability and immediately logs newly closed/opened dates</div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls" multiple onchange="handleManualFiles(this.files)">
+    </div>
+
     <div class="source-status" id="sourceStatus">
       <span class="dot warn" id="sourceDot"></span>
       <span id="sourceText" data-i18n="checkingRepo">Checking repository data file...</span>
-      <button type="button" class="refresh-btn" onclick="loadFromRepo(true)" data-i18n="refreshBtn">Refresh from GitHub</button>
+      <div class="file-list" id="fileList" style="display:none"></div>
+      <button type="button" class="clear-btn" id="clearBtn" onclick="clearManualFiles()" style="display:none;padding:5px 12px;font-size:12px;margin:0 8px;" data-i18n="clearFiles">Reset to Server Data</button>
+    </div>
+    <div class="note" id="asofNote" style="margin-top:10px"></div>
+  </section>
+
+  <!-- UPDATES & CHANGES AUDIT LOG -->
+  <section class="card changelog-card" id="changelogSection">
+    <div class="changelog-top-bar">
+      <div class="changelog-title-group">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="changelog-main-icon">📋</span>
+          <h2 style="margin:0;" data-i18n="changelogTitle">Updates &amp; Changes Audit Log</h2>
+          <span class="changelog-badge-count" id="changelogCountBadge">0</span>
+        </div>
+        <p class="changelog-desc" data-i18n="changelogDesc">
+          Automatic changelog: lists all room types closed or opened upon updating files, so staff know what's new instantly without manual search.
+        </p>
+      </div>
+      <div class="changelog-actions">
+        <button type="button" class="btn-copy-summary" onclick="copyLatestChangelogSummary()" id="copySummaryBtn">
+          <span>📋</span> <span data-i18n="copySummaryBtn">Copy Summary for Staff (WhatsApp)</span>
+        </button>
+        <button type="button" class="btn-clear-log" onclick="clearChangelogHistory()" id="clearLogBtn">
+          <span>🗑️</span> <span data-i18n="clearLogBtn">Clear Log</span>
+        </button>
+      </div>
     </div>
 
-    <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()" style="display:none">
-      <div class="upload-icon">📤</div>
-      <div class="upload-title" data-i18n="uploadPrompt">Or click here to preview a file from your computer (this session only)</div>
-      <div class="upload-sub" data-i18n="uploadSub">To update the tracker for everyone, upload any .xlsx workbook into the <b>data/</b> folder of the GitHub repo and push — the site auto-detects it, no fixed file name needed. A manual upload here only previews a file in your own browser and is not saved anywhere.</div>
-      <input type="file" id="fileInput" accept=".xlsx,.xls" multiple onchange="handleManualFiles(this.files)">
+    <div class="changelog-filters">
+      <div class="filter-pills" id="logTypeFilters">
+        <button type="button" class="pill-btn active" data-filter="all" onclick="setLogTypeFilter('all')">
+          <span data-i18n="filterAll">All Changes</span>
+        </button>
+        <button type="button" class="pill-btn" data-filter="closed" onclick="setLogTypeFilter('closed')">
+          <span class="dot-indicator red"></span> <span data-i18n="filterClosedOnly">Closed Rooms Only</span>
+        </button>
+        <button type="button" class="pill-btn" data-filter="opened" onclick="setLogTypeFilter('opened')">
+          <span class="dot-indicator green"></span> <span data-i18n="filterOpenedOnly">Opened Rooms Only</span>
+        </button>
+      </div>
+      <div class="changelog-hotel-filter">
+        <select id="logHotelSelect" onchange="renderChangelog()">
+          <option value="__ALL__" data-i18n="allHotels">All Hotels</option>
+        </select>
+      </div>
     </div>
-    <div class="file-list" id="fileList" style="display:none"></div>
-    <button type="button" class="clear-btn" id="clearBtn" onclick="clearManualFiles()" style="display:none" data-i18n="clearFiles">Clear preview &amp; reload from GitHub</button>
-    <div class="note" id="asofNote" style="margin-top:14px"></div>
+
+    <div id="changelogContainer" class="changelog-container"></div>
   </section>
 
   <section class="card">
@@ -325,6 +466,8 @@
   <div class="footer">COPYRIGHTS YANABEA ALHUDA 2026</div>
 </main>
 
+<div id="toastNotification" class="toast-notification" style="display:none;" role="status" aria-live="polite"></div>
+
 <!-- DATE DETAILS MODAL OVERLAY -->
 <div class="modal-overlay" id="dateModal" style="display:none" onclick="if(event.target===this) closeDateModal()" role="dialog" aria-modal="true" aria-labelledby="modalDateTitle">
   <div class="modal-card">
@@ -365,9 +508,9 @@ function todayDayNumber(){
   const now = new Date();
   return Math.round(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / MS_PER_DAY);
 }
-function fmtDayNumber(dayNum){
+function fmtDayNumber(dayNum, lang = currentLang){
   const d = dayNumberToDate(dayNum);
-  const months=currentLang==="ar"
+  const months = lang === "ar"
     ? ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"]
     : ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   return `${d.getUTCDate()} ${months[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
@@ -808,7 +951,45 @@ const t = {
     includePastReports:"Include previous periods in all reports",
     pastStatus:"Past period",
     waitingStops:"Waiting List Stops",
-    waitingList:"Waiting List"
+    waitingList:"Waiting List",
+    recentUpdatesMetric:"Latest Changes Log",
+    uploadCenterTitle:"File Update Center",
+    uploadCenterHeading:"Update & Upload Hotel Files",
+    uploadCenterSub:"Upload updated hotel availability sheets (.xlsx) to instantly detect closed/reopened rooms and log all changes",
+    uploadBtnLabel:"Upload Hotel .xlsx",
+    uploadPrompt:"Drag & drop updated hotel Excel file here, or click to browse",
+    uploadSubText:"Supported: .xlsx, .xls — Updates hotel availability and immediately logs newly closed/opened dates",
+    changelogTitle:"Updates & Changes Audit Log",
+    changelogDesc:"Automatic changelog: lists all room types closed or opened upon updating files, so staff know what's new instantly without manual search.",
+    copySummaryBtn:"Copy Summary for Staff (WhatsApp)",
+    clearLogBtn:"Clear Log",
+    filterAll:"All Changes",
+    filterClosedOnly:"Closed Rooms Only",
+    filterOpenedOnly:"Opened Rooms Only",
+    copiedToast:"Changelog copied to clipboard! Ready to share with staff.",
+    logCleared:"Audit log cleared successfully.",
+    noLogsYet:"No update logs recorded yet. When you upload or update any hotel file (e.g. Sheraton), changes will be tracked and displayed here automatically.",
+    newlyClosedHeader:"Newly Closed (Stop Sale Added)",
+    newlyOpenedHeader:"Newly Opened (Available to Sale)",
+    newlySubjectHeader:"Subject to Hotel Availability",
+    freedSubjectHeader:"Restrictions Lifted (Now Open)",
+    noChangesInFile:"File parsed successfully. No availability or stop-sale changes detected.",
+    updateFromUpload:"Manual File Upload",
+    updateFromRepo:"System / Repository Refresh",
+    copyEntryBtn:"Copy this Update",
+    nights:"nights",
+    night:"night",
+    days:"days",
+    day:"day",
+    from:"From",
+    to:"to",
+    stopSaleTag:"Stop Sale",
+    openTag:"Open to Sale",
+    subjectTag:"Subject to Availability",
+    hotelUpdatedSuccess:"Hotel data updated successfully!",
+    confirmClearLog:"Are you sure you want to clear the changelog history?",
+    latestBadge:"LATEST",
+    noticeForStaff:"Notice for reservations & sales team: Please adhere to the updated availability above."
   },
   ar:{
     title:"متابعة إتاحة الفنادق وإيقاف البيع - ينابيع الهدى",
@@ -855,7 +1036,45 @@ const t = {
     includePastReports:"تضمين الفترات السابقة في جميع التقارير",
     pastStatus:"فترة سابقة",
     waitingStops:"إيقافات قائمة الانتظار",
-    waitingList:"قائمة الانتظار"
+    waitingList:"قائمة الانتظار",
+    recentUpdatesMetric:"سجل التحديثات والتغييرات",
+    uploadCenterTitle:"مركز تحديث الملفات",
+    uploadCenterHeading:"تحديث ورفع ملفات الفنادق",
+    uploadCenterSub:"ارفع ملفات الإكسل المحدثة للفنادق (.xlsx) لرصد الغرف التي أغلقت أو فُتحت فوراً وتسجيلها في السجل",
+    uploadBtnLabel:"رفع ملف إكسل للفندق",
+    uploadPrompt:"اسحب وأفلت ملف إكسل للفندق هنا، أو اضغط للاختيار من جهازك",
+    uploadSubText:"صيغ مدعومة: .xlsx, .xls — يقوم بتحديث إتاحة الفندق وتسجيل الغرف التي أغلقت أو فُتحت فوراً",
+    changelogTitle:"سجل التحديثات والتغييرات الأخيرة",
+    changelogDesc:"سجل احترافي تلقائي: يوضح بالتفصيل الغرف التي أغلقت أو فُتحت فور تحديث الملفات، ليعرف الموظفون كل جديد فوراً دون الحاجة للبحث والمقارنة اليدوية.",
+    copySummaryBtn:"نسخ ملخص التحديث للموظفين (WhatsApp)",
+    clearLogBtn:"مسح السجل",
+    filterAll:"جميع التحديثات",
+    filterClosedOnly:"غرف أغلقت فقط",
+    filterOpenedOnly:"غرف فُتحت فقط",
+    copiedToast:"تم نسخ ملخص التحديثات بنجاح! يمكنك لصقه الآن في واتساب وإرساله للموظفين.",
+    logCleared:"تم مسح سجل التحديثات بنجاح.",
+    noLogsYet:"لا توجد تحديثات مسجلة حتى الآن. عند رفع أو تحديث أي ملف فندق (مثل شيراتون)، سيتم رصد وتسجيل التعديلات تلقائياً هنا.",
+    newlyClosedHeader:"غرف أغلقت حديثاً (إيقاف بيع جديد)",
+    newlyOpenedHeader:"غرف فُتحت حديثاً (متاحة للبيع الآن)",
+    newlySubjectHeader:"غرف أصبحت خاضعة لتوافر الفندق",
+    freedSubjectHeader:"تم رفع القيود وإتاحتها للبيع",
+    noChangesInFile:"تم فحص وقراءة الملف بنجاح، ولم يطرأ أي تغيير على مواعيد الإتاحة الحالية مقارنة بالبيانات السابقة.",
+    updateFromUpload:"رفع ملف يدوي",
+    updateFromRepo:"تحديث من النظام / المستودع",
+    copyEntryBtn:"نسخ هذا التحديث",
+    nights:"ليالٍ",
+    night:"ليلة واحدة",
+    days:"أيام",
+    day:"يوم",
+    from:"من",
+    to:"إلى",
+    stopSaleTag:"إيقاف بيع جديد",
+    openTag:"متاح للبيع الآن",
+    subjectTag:"خاضع للتوافر",
+    hotelUpdatedSuccess:"تم تحديث بيانات الفندق بنجاح!",
+    confirmClearLog:"هل أنت متأكد من مسح سجل التحديثات بالكامل؟",
+    latestBadge:"الأحدث",
+    noticeForStaff:"تنبيه لفرق الحجوزات والمبيعات: يُرجى مراعاة الإغلاقات والافتتاحات الجديدة المذكورة أعلاه عند تأكيد الحجوزات."
   }
 };
 
@@ -868,8 +1087,11 @@ function setLang(lang){
   document.querySelectorAll("[data-i18n-ph]").forEach(el=>{if(t[lang][el.dataset.i18nPh]) el.placeholder=t[lang][el.dataset.i18nPh]});
   updateAsOfNote();
   populateCalendarSelectors();
+  populateLogHotelFilter();
   renderCalendar();
   render();
+  renderChangelog();
+  updateChangelogCount();
 }
 
 /* ============================================================
@@ -952,33 +1174,33 @@ function resetData(){
   hotelData = {};
 }
 
-function ensureRoom(hotel, roomRaw){
+function ensureRoom(hotel, roomRaw, data = hotelData){
   hotel = cleanHotelName(hotel);
   const key = isAllRoomsLabel(roomRaw) ? "__ALL__" : canonicalRoomKey(roomRaw);
-  if(!hotelData[hotel]) hotelData[hotel] = {};
-  if(!hotelData[hotel][key]){
-    hotelData[hotel][key] = {
+  if(!data[hotel]) data[hotel] = {};
+  if(!data[hotel][key]){
+    data[hotel][key] = {
       display: isAllRoomsLabel(roomRaw) ? null : displayRoomName(roomRaw),
       dayNumbers: new Set(),
       availabilityDayNumbers: new Set()
     };
   }
   if(!isAllRoomsLabel(roomRaw)){
-    const cur = hotelData[hotel][key].display;
+    const cur = data[hotel][key].display;
     const cleanDisplay = displayRoomName(roomRaw);
-    if(!cur || cleanDisplay.length < cur.length) hotelData[hotel][key].display = cleanDisplay;
+    if(!cur || cleanDisplay.length < cur.length) data[hotel][key].display = cleanDisplay;
   }
-  return hotelData[hotel][key];
+  return data[hotel][key];
 }
 
-function addStopDay(hotel, roomRaw, dayNum){
-  const entry = ensureRoom(hotel, roomRaw);
+function addStopDay(hotel, roomRaw, dayNum, data = hotelData){
+  const entry = ensureRoom(hotel, roomRaw, data);
   entry.dayNumbers.add(dayNum);
   entry.availabilityDayNumbers.delete(dayNum);
 }
 
-function addAvailabilityDay(hotel, roomRaw, dayNum){
-  const entry = ensureRoom(hotel, roomRaw);
+function addAvailabilityDay(hotel, roomRaw, dayNum, data = hotelData){
+  const entry = ensureRoom(hotel, roomRaw, data);
   if(!entry.dayNumbers.has(dayNum)){
     entry.availabilityDayNumbers.add(dayNum);
   }
@@ -1024,7 +1246,7 @@ function parseDateString(str) {
   return Math.round(Date.UTC(year, monthIdx, day) / MS_PER_DAY);
 }
 
-function parseWorkbook(wb, fileLabel, stats){
+function parseWorkbook(wb, fileLabel, stats, targetData = hotelData){
   // Only read VISIBLE sheet tabs. Workbooks like this one keep one tab per
   // month and hide old/archived months — if we parsed every hidden tab too,
   // stop-sale marks from old archived months would leak into the current
@@ -1044,8 +1266,14 @@ function parseWorkbook(wb, fileLabel, stats){
     let currentHotel = null;
 
     for(let R=range.s.r; R<=range.e.r; R++){
-      const aCell = ws[XLSX.utils.encode_cell({r:R,c:0})];
-      const aVal = (aCell && aCell.v!=null) ? String(aCell.v).trim() : "";
+      let aCell = ws[XLSX.utils.encode_cell({r:R,c:0})];
+      let aVal = (aCell && aCell.v!=null) ? String(aCell.v).trim() : "";
+      if(!aVal){
+        const bCell = ws[XLSX.utils.encode_cell({r:R,c:1})];
+        if(bCell && bCell.v!=null && typeof bCell.v === 'string' && !parseDateString(bCell.v)){
+          aVal = String(bCell.v).trim();
+        }
+      }
 
       let rowDayCols = {};
       let dateCellCount = 0;
@@ -1075,7 +1303,7 @@ function parseWorkbook(wb, fileLabel, stats){
         sheetHasDates = true;
         let hotelName = aVal;
         if(!hotelName && R > range.s.r){
-          const prevCell = ws[XLSX.utils.encode_cell({r: R - 1, c: 0})];
+          const prevCell = ws[XLSX.utils.encode_cell({r: R - 1, c: 0})] || ws[XLSX.utils.encode_cell({r: R - 1, c: 1})];
           if(prevCell && prevCell.v != null){
             hotelName = String(prevCell.v).trim();
           }
@@ -1094,15 +1322,15 @@ function parseWorkbook(wb, fileLabel, stats){
       // Retain every source room row, including rooms that are fully open.
       // The template-style download needs the complete hotel/room grid rather
       // than only rows that currently contain a red stop-sale cell.
-      ensureRoom(targetHotel, roomName);
+      ensureRoom(targetHotel, roomName, targetData);
       const subjectToAvailability = isSubjectToHotelAvailability(roomName);
       Object.keys(dayByCol).forEach(colStr=>{
         const C = Number(colStr);
         const cell = ws[XLSX.utils.encode_cell({r:R,c:C})];
         if(isRedFill(cell)){
-          addStopDay(targetHotel, roomName, dayByCol[colStr]);
+          addStopDay(targetHotel, roomName, dayByCol[colStr], targetData);
         } else if(subjectToAvailability){
-          addAvailabilityDay(targetHotel, roomName, dayByCol[colStr]);
+          addAvailabilityDay(targetHotel, roomName, dayByCol[colStr], targetData);
         }
       });
     }
@@ -1148,6 +1376,611 @@ function buildRanges(includePast = false){
 }
 
 /* ============================================================
+   CHANGELOG & AUDIT LOG ENGINE
+   Tracks, diffs, and displays hotel stop-sale / availability changes
+   ============================================================ */
+
+const CHANGELOG_STORAGE_KEY = "stopsale_changelog_history_v1";
+const REPO_SNAPSHOT_STORAGE_KEY = "stopsale_repo_snapshot_v1";
+let activeLogTypeFilter = "all";
+
+function daysToRanges(days, kind){
+  const ranges = [];
+  let start = null, prev = null;
+  days.forEach(d => {
+    if(start === null){ start = d; prev = d; return; }
+    if(d - prev === 1){ prev = d; }
+    else { ranges.push({ start, end: prev, kind }); start = d; prev = d; }
+  });
+  if(start !== null) ranges.push({ start, end: prev, kind });
+  return ranges;
+}
+
+function formatRangeText(r, lang = currentLang){
+  const count = r.end - r.start + 1;
+  const nights = count > 1 ? count - 1 : 1;
+  const nightsLabel = lang === "ar"
+    ? (count === 1 ? (t.ar.night || "ليلة واحدة") : `${nights} ${t.ar.nights || "ليالٍ"}`)
+    : (count === 1 ? "1 night" : `${nights} nights`);
+  
+  if (r.start === r.end) {
+    return `${fmtDayNumber(r.start, lang)} (${nightsLabel})`;
+  }
+  const fromTo = lang === "ar"
+    ? `من ${fmtDayNumber(r.start, lang)} إلى ${fmtDayNumber(r.end, lang)}`
+    : `${fmtDayNumber(r.start, lang)} → ${fmtDayNumber(r.end, lang)}`;
+  return `${fromTo} (${nightsLabel} / ${count} ${lang === "ar" ? (t.ar.days || "أيام") : "days"})`;
+}
+
+function formatDateTime(d = new Date(), lang = currentLang){
+  try {
+    return d.toLocaleString(lang === "ar" ? "ar-SA" : "en-US", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+  } catch(e) {
+    return d.toISOString();
+  }
+}
+
+function captureHotelSnapshot(source = hotelData, targetHotels = null){
+  const snap = {};
+  const hotels = targetHotels || Object.keys(source);
+  hotels.forEach(hotel => {
+    if(!source[hotel]) return;
+    snap[hotel] = {};
+    Object.keys(source[hotel]).forEach(roomKey => {
+      const room = source[hotel][roomKey];
+      snap[hotel][roomKey] = {
+        display: room.display,
+        stops: Array.from(room.dayNumbers || []).sort((a,b)=>a-b),
+        subjects: Array.from(room.availabilityDayNumbers || []).sort((a,b)=>a-b)
+      };
+    });
+  });
+  return snap;
+}
+
+function diffHotelSnapshots(oldSnap, newSnap, targetHotels = null){
+  const hotels = targetHotels || Array.from(new Set([
+    ...Object.keys(oldSnap || {}),
+    ...Object.keys(newSnap || {})
+  ])).filter(Boolean);
+
+  const hotelDiffs = [];
+  const minDay = todayDayNumber();
+
+  hotels.forEach(hotel => {
+    const oldH = (oldSnap && oldSnap[hotel]) || {};
+    const newH = (newSnap && newSnap[hotel]) || {};
+    const roomKeys = Array.from(new Set([
+      ...Object.keys(oldH),
+      ...Object.keys(newH)
+    ]));
+
+    const item = {
+      hotel,
+      newlyClosed: [],
+      newlyOpened: [],
+      newlySubject: [],
+      freedSubject: [],
+      totalChanges: 0
+    };
+
+    roomKeys.forEach(rKey => {
+      const oldRoom = oldH[rKey] || { display: null, stops: [], subjects: [] };
+      const newRoom = newH[rKey] || { display: null, stops: [], subjects: [] };
+      const display = newRoom.display || oldRoom.display || (rKey === "__ALL__" ? (t[currentLang]?.allRoomTypes || "All Room Types") : rKey);
+
+      const oldStops = new Set(oldRoom.stops || []);
+      const newStops = new Set(newRoom.stops || []);
+      const oldSubj = new Set(oldRoom.subjects || []);
+      const newSubj = new Set(newRoom.subjects || []);
+
+      const closedDays = Array.from(newStops)
+        .filter(d => !oldStops.has(d) && d >= minDay)
+        .sort((a,b)=>a-b);
+
+      const openedDays = Array.from(oldStops)
+        .filter(d => !newStops.has(d) && !newSubj.has(d) && d >= minDay)
+        .sort((a,b)=>a-b);
+
+      const subjDays = Array.from(newSubj)
+        .filter(d => !oldSubj.has(d) && !newStops.has(d) && d >= minDay)
+        .sort((a,b)=>a-b);
+
+      const freedDays = Array.from(oldSubj)
+        .filter(d => !newSubj.has(d) && !newStops.has(d) && d >= minDay)
+        .sort((a,b)=>a-b);
+
+      if(closedDays.length){
+        item.newlyClosed.push({ roomKey: rKey, display, ranges: daysToRanges(closedDays, "stop"), count: closedDays.length });
+        item.totalChanges += closedDays.length;
+      }
+      if(openedDays.length){
+        item.newlyOpened.push({ roomKey: rKey, display, ranges: daysToRanges(openedDays, "open"), count: openedDays.length });
+        item.totalChanges += openedDays.length;
+      }
+      if(subjDays.length){
+        item.newlySubject.push({ roomKey: rKey, display, ranges: daysToRanges(subjDays, "subject"), count: subjDays.length });
+        item.totalChanges += subjDays.length;
+      }
+      if(freedDays.length){
+        item.freedSubject.push({ roomKey: rKey, display, ranges: daysToRanges(freedDays, "freed"), count: freedDays.length });
+        item.totalChanges += freedDays.length;
+      }
+    });
+
+    if(item.totalChanges > 0 || (Object.keys(oldH).length === 0 && Object.keys(newH).length > 0)){
+      hotelDiffs.push(item);
+    }
+  });
+
+  return hotelDiffs;
+}
+
+function computeDiffSummary(diffs){
+  let closedRooms = 0, openedRooms = 0, subjectRooms = 0, totalDays = 0;
+  (diffs || []).forEach(d => {
+    closedRooms += (d.newlyClosed || []).length;
+    openedRooms += (d.newlyOpened || []).length;
+    subjectRooms += (d.newlySubject || []).length + (d.freedSubject || []).length;
+    totalDays += d.totalChanges || 0;
+  });
+  return { closedRooms, openedRooms, subjectRooms, totalDays };
+}
+
+function generateWhatsAppText(entry, lang = currentLang){
+  const isAr = lang === "ar";
+  const lines = [];
+  lines.push(isAr ? `📢 *تحديث إتاحة الفنادق وإيقاف البيع - ينابيع الهدى*` : `📢 *Hotel Availability & Stop Sale Update - Yanabea Alhuda*`);
+  lines.push(isAr ? `🕒 *التاريخ:* ${entry.timeFormatted}` : `🕒 *Date:* ${entry.timeFormatted}`);
+  if(entry.fileNames && entry.fileNames.length){
+    lines.push(isAr ? `📁 *الملف:* ${entry.fileNames.join(", ")}` : `📁 *File:* ${entry.fileNames.join(", ")}`);
+  }
+  lines.push(`━━━━━━━━━━━━━━━━━━━━━`);
+
+  let hasContent = false;
+  (entry.diffs || []).forEach(hDiff => {
+    if(!hDiff.totalChanges && !hDiff.newlyClosed.length && !hDiff.newlyOpened.length) return;
+    hasContent = true;
+    lines.push(`\n🏨 *${hDiff.hotel}*:`);
+
+    if(hDiff.newlyClosed && hDiff.newlyClosed.length){
+      lines.push(isAr ? `🛑 *غرف أغلقت حديثاً (إيقاف بيع):*` : `🛑 *Newly Closed (Stop Sale Added):*`);
+      hDiff.newlyClosed.forEach(r => {
+        r.ranges.forEach(rng => {
+          lines.push(`  • ${r.display}: ${formatRangeText(rng, lang)}`);
+        });
+      });
+    }
+
+    if(hDiff.newlyOpened && hDiff.newlyOpened.length){
+      lines.push(isAr ? `✅ *غرف فُتحت حديثاً (متاح للبيع الآن):*` : `✅ *Newly Opened (Available to Sale):*`);
+      hDiff.newlyOpened.forEach(r => {
+        r.ranges.forEach(rng => {
+          lines.push(`  • ${r.display}: ${formatRangeText(rng, lang)}`);
+        });
+      });
+    }
+
+    if(hDiff.newlySubject && hDiff.newlySubject.length){
+      lines.push(isAr ? `⚠️ *خاضع لتوافر الفندق:*` : `⚠️ *Subject to Hotel Availability:*`);
+      hDiff.newlySubject.forEach(r => {
+        r.ranges.forEach(rng => {
+          lines.push(`  • ${r.display}: ${formatRangeText(rng, lang)}`);
+        });
+      });
+    }
+
+    if(hDiff.freedSubject && hDiff.freedSubject.length){
+      lines.push(isAr ? `🟢 *تم رفع القيود وإتاحتها للبيع:*` : `🟢 *Restrictions Lifted (Now Open):*`);
+      hDiff.freedSubject.forEach(r => {
+        r.ranges.forEach(rng => {
+          lines.push(`  • ${r.display}: ${formatRangeText(rng, lang)}`);
+        });
+      });
+    }
+  });
+
+  if(!hasContent){
+    lines.push(isAr ? `ℹ️ لم يتم رصد أي تغييرات في مواعيد الإتاحة أو إيقاف البيع.` : `ℹ️ No availability or stop-sale changes detected.`);
+  }
+
+  lines.push(`\n━━━━━━━━━━━━━━━━━━━━━`);
+  lines.push(isAr ? `💡 *تنبيه للموظفين:* يُرجى مراعاة التحديثات أعلاه عند استقبال ومتابعة طلبات الحجز.` : `💡 *Notice for staff:* Please adhere to the updated availability above for reservations.`);
+
+  return lines.join("\n");
+}
+
+function getChangelogHistory(){
+  try {
+    const raw = localStorage.getItem(CHANGELOG_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function saveChangelogEntry(entry){
+  try {
+    const history = getChangelogHistory();
+    history.unshift(entry);
+    if(history.length > 30) history.length = 30;
+    localStorage.setItem(CHANGELOG_STORAGE_KEY, JSON.stringify(history));
+  } catch(e){}
+}
+
+function clearChangelogHistory(){
+  if(confirm(t[currentLang]?.confirmClearLog || "Are you sure you want to clear the changelog history?")){
+    try {
+      localStorage.removeItem(CHANGELOG_STORAGE_KEY);
+    } catch(e){}
+    renderChangelog();
+    updateChangelogCount();
+    showToast(t[currentLang]?.logCleared || "Audit log cleared successfully.", "info");
+  }
+}
+
+function setLogTypeFilter(filter){
+  activeLogTypeFilter = filter;
+  const filterWrap = document.getElementById("logTypeFilters");
+  if(filterWrap){
+    filterWrap.querySelectorAll(".pill-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.filter === filter);
+    });
+  }
+  renderChangelog();
+}
+
+function populateLogHotelFilter(){
+  const select = document.getElementById("logHotelSelect");
+  if(!select) return;
+  const prevVal = select.value;
+  const hotels = Object.keys(hotelData).sort((a,b)=>a.localeCompare(b));
+  let opts = `<option value="__ALL__">${t[currentLang]?.allHotels || "All Hotels"}</option>`;
+  hotels.forEach(h => {
+    opts += `<option value="${escapeHTML(h)}">${escapeHTML(h)}</option>`;
+  });
+  select.innerHTML = opts;
+  if(prevVal && (prevVal === "__ALL__" || hotels.includes(prevVal))){
+    select.value = prevVal;
+  } else {
+    select.value = "__ALL__";
+  }
+}
+
+function updateChangelogCount(){
+  const history = getChangelogHistory();
+  const countBadge = document.getElementById("changelogCountBadge");
+  const metricCount = document.getElementById("mLogCount");
+  const count = history.length;
+  if(countBadge) countBadge.innerText = count;
+  if(metricCount) metricCount.innerText = count === 1 ? (currentLang === "ar" ? "1 تحديث" : "1 update") : (currentLang === "ar" ? `${count} تحديثات` : `${count} updates`);
+}
+
+function scrollToChangelog(){
+  const el = document.getElementById("changelogSection");
+  if(el){
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function showToast(message, type = "success"){
+  const toast = document.getElementById("toastNotification");
+  if(!toast) return;
+  const icon = type === "success" ? "✅" : (type === "warn" ? "⚠️" : "ℹ️");
+  toast.innerHTML = `<span style="font-size:16px;">${icon}</span> <span>${escapeHTML(message)}</span>`;
+  toast.style.display = "flex";
+  if(window._toastTimeout) clearTimeout(window._toastTimeout);
+  window._toastTimeout = setTimeout(() => {
+    toast.style.display = "none";
+  }, 4000);
+}
+
+function copyLatestChangelogSummary(){
+  const history = getChangelogHistory();
+  if(!history.length){
+    showToast(t[currentLang]?.noLogsYet || "No updates logged yet.", "warn");
+    return;
+  }
+  copyChangelogEntrySummary(history[0].id);
+}
+
+function copyChangelogEntrySummary(entryId){
+  const history = getChangelogHistory();
+  const entry = history.find(e => e.id === entryId) || history[0];
+  if(!entry) return;
+  const text = generateWhatsAppText(entry, currentLang);
+
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(() => {
+      showToast(t[currentLang]?.copiedToast || "Copied to clipboard!", "success");
+    }).catch(() => {
+      fallbackCopyText(text);
+    });
+  } else {
+    fallbackCopyText(text);
+  }
+}
+
+function fallbackCopyText(text){
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand("copy");
+    showToast(t[currentLang]?.copiedToast || "Copied to clipboard!", "success");
+  } catch(e){
+    alert("Copy failed. Please copy manually.");
+  }
+  document.body.removeChild(ta);
+}
+
+function renderChangelog(){
+  const container = document.getElementById("changelogContainer");
+  if(!container) return;
+  const history = getChangelogHistory();
+  updateChangelogCount();
+
+  if(!history.length){
+    container.innerHTML = `
+      <div class="changelog-empty">
+        <div class="empty-icon">📅</div>
+        <div>${t[currentLang]?.noLogsYet || "No update logs recorded yet."}</div>
+      </div>
+    `;
+    return;
+  }
+
+  const selectedHotel = document.getElementById("logHotelSelect") ? document.getElementById("logHotelSelect").value : "__ALL__";
+  const filterType = activeLogTypeFilter;
+
+  let entriesHtml = [];
+
+  history.forEach((entry, idx) => {
+    const isLatest = idx === 0;
+    let filteredDiffs = (entry.diffs || []).filter(hDiff => {
+      if(selectedHotel !== "__ALL__" && normalize(hDiff.hotel) !== normalize(selectedHotel)) return false;
+      return true;
+    });
+
+    if(selectedHotel !== "__ALL__" && !filteredDiffs.length) return;
+
+    let hasMatchingChanges = false;
+    const hotelBlocksHtml = [];
+
+    filteredDiffs.forEach(hDiff => {
+      const showClosed = (filterType === "all" || filterType === "closed") && (hDiff.newlyClosed && hDiff.newlyClosed.length);
+      const showOpened = (filterType === "all" || filterType === "opened") && (hDiff.newlyOpened && hDiff.newlyOpened.length);
+      const showSubject = (filterType === "all") && ((hDiff.newlySubject && hDiff.newlySubject.length) || (hDiff.freedSubject && hDiff.freedSubject.length));
+
+      if(!showClosed && !showOpened && !showSubject && hDiff.totalChanges > 0) return;
+
+      hasMatchingChanges = true;
+      let boxesHtml = "";
+
+      if(showClosed){
+        const items = hDiff.newlyClosed.map(r => {
+          return r.ranges.map(rng => `
+            <div class="change-item">
+              <span class="change-room-name">🚪 ${escapeHTML(r.display)}</span>
+              <span class="change-range-chip" style="color:var(--red);">
+                <span>📅 ${escapeHTML(formatRangeText(rng, currentLang))}</span>
+                <span class="status-pill active" style="font-size:10px;">${t[currentLang]?.stopSaleTag || "Stop Sale"}</span>
+              </span>
+            </div>
+          `).join("");
+        }).join("");
+
+        boxesHtml += `
+          <div class="change-box closed">
+            <div class="change-box-head">
+              <span>🛑</span> <span>${t[currentLang]?.newlyClosedHeader || "Newly Closed (Stop Sale)"}</span>
+              <span class="badge active" style="margin-inline-start:auto;font-size:10px;">${hDiff.newlyClosed.length}</span>
+            </div>
+            <div class="change-items-list">${items}</div>
+          </div>
+        `;
+      }
+
+      if(showOpened){
+        const items = hDiff.newlyOpened.map(r => {
+          return r.ranges.map(rng => `
+            <div class="change-item">
+              <span class="change-room-name">🟢 ${escapeHTML(r.display)}</span>
+              <span class="change-range-chip" style="color:var(--green);">
+                <span>📅 ${escapeHTML(formatRangeText(rng, currentLang))}</span>
+                <span class="status-pill clear" style="background:var(--green);color:#fff;font-size:10px;">${t[currentLang]?.openTag || "Open"}</span>
+              </span>
+            </div>
+          `).join("");
+        }).join("");
+
+        boxesHtml += `
+          <div class="change-box opened">
+            <div class="change-box-head">
+              <span>✅</span> <span>${t[currentLang]?.newlyOpenedHeader || "Newly Opened (Available to Sale)"}</span>
+              <span class="badge clear" style="margin-inline-start:auto;font-size:10px;">${hDiff.newlyOpened.length}</span>
+            </div>
+            <div class="change-items-list">${items}</div>
+          </div>
+        `;
+      }
+
+      if(showSubject){
+        if(hDiff.newlySubject && hDiff.newlySubject.length){
+          const items = hDiff.newlySubject.map(r => {
+            return r.ranges.map(rng => `
+              <div class="change-item">
+                <span class="change-room-name">⚠️ ${escapeHTML(r.display)}</span>
+                <span class="change-range-chip" style="color:#0f766e;">
+                  <span>📅 ${escapeHTML(formatRangeText(rng, currentLang))}</span>
+                  <span class="status-pill waiting" style="font-size:10px;">${t[currentLang]?.subjectTag || "Subject"}</span>
+                </span>
+              </div>
+            `).join("");
+          }).join("");
+
+          boxesHtml += `
+            <div class="change-box subject">
+              <div class="change-box-head">
+                <span>⚠️</span> <span>${t[currentLang]?.newlySubjectHeader || "Subject to Hotel Availability"}</span>
+                <span class="badge waiting" style="margin-inline-start:auto;font-size:10px;">${hDiff.newlySubject.length}</span>
+              </div>
+              <div class="change-items-list">${items}</div>
+            </div>
+          `;
+        }
+
+        if(hDiff.freedSubject && hDiff.freedSubject.length){
+          const items = hDiff.freedSubject.map(r => {
+            return r.ranges.map(rng => `
+              <div class="change-item">
+                <span class="change-room-name">🔓 ${escapeHTML(r.display)}</span>
+                <span class="change-range-chip" style="color:var(--green);">
+                  <span>📅 ${escapeHTML(formatRangeText(rng, currentLang))}</span>
+                  <span class="status-pill clear" style="background:var(--green);color:#fff;font-size:10px;">${t[currentLang]?.openTag || "Open"}</span>
+                </span>
+              </div>
+            `).join("");
+          }).join("");
+
+          boxesHtml += `
+            <div class="change-box opened">
+              <div class="change-box-head">
+                <span>🔓</span> <span>${t[currentLang]?.freedSubjectHeader || "Availability Restrictions Lifted"}</span>
+              </div>
+              <div class="change-items-list">${items}</div>
+            </div>
+          `;
+        }
+      }
+
+      if(boxesHtml){
+        hotelBlocksHtml.push(`
+          <div class="changelog-hotel-block">
+            <div class="changelog-hotel-title">
+              <span>🏨</span> <span>${escapeHTML(hDiff.hotel)}</span>
+            </div>
+            ${boxesHtml}
+          </div>
+        `);
+      }
+    });
+
+    if(!hasMatchingChanges && entry.hasChanges && filterType !== "all") return;
+
+    const s = entry.summary || computeDiffSummary(entry.diffs);
+    const triggerLabel = entry.trigger === "upload" 
+      ? (t[currentLang]?.updateFromUpload || "File Upload") 
+      : (t[currentLang]?.updateFromRepo || "System Refresh");
+
+    let statChips = [];
+    if(s.closedRooms > 0) statChips.push(`<span class="stat-chip closed">🛑 ${s.closedRooms} ${t[currentLang]?.filterClosedOnly || "Closed"}</span>`);
+    if(s.openedRooms > 0) statChips.push(`<span class="stat-chip opened">✅ ${s.openedRooms} ${t[currentLang]?.filterOpenedOnly || "Opened"}</span>`);
+    if(!entry.hasChanges) statChips.push(`<span class="stat-chip" style="background:#f4f4f4;color:#666;">ℹ️ ${t[currentLang]?.noChangesInFile || "No changes"}</span>`);
+
+    const fileBadge = entry.fileNames && entry.fileNames.length 
+      ? `<span class="entry-file-tag">📁 ${escapeHTML(entry.fileNames.join(", "))}</span>` 
+      : `<span class="entry-file-tag">${escapeHTML(triggerLabel)}</span>`;
+
+    const latestBadgeHtml = isLatest ? `<span class="entry-badge-latest">${t[currentLang]?.latestBadge || "LATEST"}</span>` : "";
+
+    const contentHtml = hotelBlocksHtml.length 
+      ? hotelBlocksHtml.join("")
+      : `<div class="note" style="padding:10px 0;">${t[currentLang]?.noChangesInFile || "No availability or stop-sale changes detected."}</div>`;
+
+    entriesHtml.push(`
+      <div class="changelog-entry ${isLatest ? 'latest' : ''}" id="entry-${entry.id}">
+        <div class="changelog-entry-head" onclick="toggleEntryDetails('${entry.id}')">
+          <div class="entry-meta">
+            ${latestBadgeHtml}
+            <span class="entry-time">🕒 ${escapeHTML(entry.timeFormatted)}</span>
+            ${fileBadge}
+          </div>
+          <div class="entry-stats">
+            ${statChips.join(" ")}
+            <button type="button" class="entry-single-copy-btn" onclick="event.stopPropagation();copyChangelogEntrySummary('${entry.id}')" title="${t[currentLang]?.copyEntryBtn || 'Copy this update'}">
+              <span>📋</span> <span>${t[currentLang]?.copyEntryBtn || 'Copy'}</span>
+            </button>
+            <span class="chev open" id="chev-entry-${entry.id}">▶</span>
+          </div>
+        </div>
+        <div class="changelog-entry-body" id="body-entry-${entry.id}">
+          ${contentHtml}
+        </div>
+      </div>
+    `);
+  });
+
+  if(!entriesHtml.length){
+    container.innerHTML = `
+      <div class="changelog-empty">
+        <div class="empty-icon">🔍</div>
+        <div>${t[currentLang]?.noMatch || "No updates match your filters."}</div>
+      </div>
+    `;
+  } else {
+    container.innerHTML = entriesHtml.join("");
+  }
+}
+
+function toggleEntryDetails(entryId){
+  const body = document.getElementById("body-entry-" + entryId);
+  const chev = document.getElementById("chev-entry-" + entryId);
+  if(body){
+    const isCollapsed = body.classList.toggle("collapsed");
+    if(chev) chev.classList.toggle("open", !isCollapsed);
+  }
+}
+
+function saveCurrentSnapshot(){
+  try {
+    const snap = captureHotelSnapshot(hotelData);
+    localStorage.setItem(REPO_SNAPSHOT_STORAGE_KEY, JSON.stringify(snap));
+  } catch(e){}
+}
+
+function checkRepoSnapshotChanges(){
+  try {
+    const prevRaw = localStorage.getItem(REPO_SNAPSHOT_STORAGE_KEY);
+    const currentSnap = captureHotelSnapshot(hotelData);
+    if(prevRaw){
+      const prevSnap = JSON.parse(prevRaw);
+      const diffs = diffHotelSnapshots(prevSnap, currentSnap);
+      const hasChanges = diffs.some(d => d.totalChanges > 0);
+      if(hasChanges){
+        const now = new Date();
+        const entry = {
+          id: "repo_" + Date.now(),
+          timestamp: now.getTime(),
+          timeFormatted: formatDateTime(now, currentLang),
+          trigger: "repo",
+          fileNames: ["GitHub / Server"],
+          hotels: Object.keys(currentSnap),
+          diffs,
+          hasChanges: true,
+          summary: computeDiffSummary(diffs)
+        };
+        saveChangelogEntry(entry);
+        renderChangelog();
+        updateChangelogCount();
+      }
+    }
+    localStorage.setItem(REPO_SNAPSHOT_STORAGE_KEY, JSON.stringify(currentSnap));
+  } catch(e){}
+}
+
+/* ============================================================
    DATA SOURCE: GitHub-hosted file, with manual preview override
    ============================================================ */
 async function loadFromRepo(isManualRefresh){
@@ -1156,8 +1989,6 @@ async function loadFromRepo(isManualRefresh){
   sourceText.innerText = t[currentLang].checkingRepo;
   mStatus.innerText = t[currentLang].loading;
   try{
-    // Auto-discover whatever workbooks + logo/slogan images are sitting
-    // in data/ or anywhere in the repo.
     let assets = await discoverRepoAssets();
     assets = await fillMissingAssetsViaProbe(assets);
     applyBrandAssets(assets);
@@ -1200,6 +2031,7 @@ async function loadFromRepo(isManualRefresh){
     sourceText.innerHTML = `${t[currentLang].repoLoaded} ${loadedPaths}`;
     mStatus.innerText = t[currentLang].ready;
     finishLoad();
+    checkRepoSnapshotChanges();
   }catch(err){
     console.error(err);
     sourceDot.className = "dot err";
@@ -1208,34 +2040,111 @@ async function loadFromRepo(isManualRefresh){
   }
 }
 
-function handleManualFiles(files){
+async function handleManualFiles(files){
   if(!files || !files.length) return;
-  resetData();
+  const fileArray = Array.from(files);
+  manualFileNames = fileArray.map(f => f.name);
   isManualPreview = true;
-  manualFileNames = Array.from(files).map(f=>f.name);
   renderFileList();
-  const stats = {sheets:0};
-  let pending = files.length;
-  Array.from(files).forEach(file=>{
-    const reader = new FileReader();
-    reader.onload = e=>{
-      try{
-        const data = new Uint8Array(e.target.result);
-        const wb = XLSX.read(data, {type:"array", cellStyles:true, cellNF:true});
-        parseWorkbook(wb, file.name, stats);
-      }catch(err){
-        console.error("Failed to parse "+file.name, err);
-      }
-      pending--;
-      if(pending===0){
-        sourceDot.className = "dot warn";
-        sourceText.innerHTML = `${t[currentLang].previewing} ${manualFileNames.map(escapeHTML).join(", ")}`;
-        mStatus.innerText = t[currentLang].ready;
-        finishLoad();
-      }
-    };
-    reader.readAsArrayBuffer(file);
+
+  const fileDataPromises = fileArray.map(file => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const wb = XLSX.read(data, {type:"array", cellStyles:true, cellNF:true});
+          resolve({ file, wb });
+        } catch(err) {
+          console.error("Failed to parse " + file.name, err);
+          resolve({ file, wb: null, error: err });
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
   });
+
+  const parsedResults = await Promise.all(fileDataPromises);
+  const updatedHotelsSet = new Set();
+  const fileTempDataList = [];
+
+  parsedResults.forEach(({ file, wb }) => {
+    if(!wb) return;
+    const tempStats = { sheets: 0 };
+    const tempData = {};
+    parseWorkbook(wb, file.name, tempStats, tempData);
+    const hotelsInFile = Object.keys(tempData);
+    hotelsInFile.forEach(h => updatedHotelsSet.add(h));
+    fileTempDataList.push({ file, tempData, hotels: hotelsInFile });
+  });
+
+  const updatedHotels = Array.from(updatedHotelsSet);
+  if(!updatedHotels.length){
+    showToast(t[currentLang]?.noMatch || "No hotel data found in uploaded file.", "warn");
+    return;
+  }
+
+  // Capture snapshot BEFORE updating for these affected hotels
+  const oldSnapshot = captureHotelSnapshot(hotelData, updatedHotels);
+
+  // Update hotelData with the new hotel objects
+  fileTempDataList.forEach(({ tempData }) => {
+    Object.keys(tempData).forEach(hotel => {
+      let targetKey = hotel;
+      for (const k of Object.keys(hotelData)) {
+        if (normalize(k) === normalize(hotel)) {
+          targetKey = k;
+          break;
+        }
+      }
+      hotelData[targetKey] = tempData[hotel];
+    });
+  });
+
+  // Capture snapshot AFTER updating for these affected hotels
+  const newSnapshot = captureHotelSnapshot(hotelData, updatedHotels);
+
+  // Compute diff
+  const hotelDiffs = diffHotelSnapshots(oldSnapshot, newSnapshot, updatedHotels);
+
+  // Generate and save Changelog Entry
+  const now = new Date();
+  const entryId = "update_" + Date.now();
+  const logEntry = {
+    id: entryId,
+    timestamp: now.getTime(),
+    timeFormatted: formatDateTime(now, currentLang),
+    trigger: "upload",
+    fileNames: manualFileNames,
+    hotels: updatedHotels,
+    diffs: hotelDiffs,
+    hasChanges: hotelDiffs.some(d => d.totalChanges > 0),
+    summary: computeDiffSummary(hotelDiffs)
+  };
+
+  saveChangelogEntry(logEntry);
+  saveCurrentSnapshot();
+
+  sourceDot.className = "dot ok";
+  sourceText.innerHTML = `${t[currentLang].previewing} ${manualFileNames.map(escapeHTML).join(", ")}`;
+  mStatus.innerText = t[currentLang].ready;
+
+  finishLoad();
+
+  if(logEntry.hasChanges){
+    const s = logEntry.summary;
+    const toastMsg = currentLang === "ar"
+      ? `✅ تم تحديث بيانات (${updatedHotels.join(", ")}) بنجاح! رُصد: ${s.closedRooms} إغلاقات و ${s.openedRooms} افتتاحات.`
+      : `✅ Updated (${updatedHotels.join(", ")})! Detected: ${s.closedRooms} closures and ${s.openedRooms} openings.`;
+    showToast(toastMsg, "success");
+  } else {
+    const toastMsg = currentLang === "ar"
+      ? `ℹ️ تم قراءة ملف (${manualFileNames.join(", ")}) بنجاح. لم يطرأ أي تغيير على مواعيد الإتاحة.`
+      : `ℹ️ File (${manualFileNames.join(", ")}) parsed. No availability changes detected.`;
+    showToast(toastMsg, "info");
+  }
+
+  scrollToChangelog();
 }
 
 function clearManualFiles(){
@@ -1254,8 +2163,11 @@ function renderFileList(){
 function finishLoad(){
   updateAsOfNote();
   populateCalendarSelectors();
+  populateLogHotelFilter();
   renderCalendar();
   render();
+  renderChangelog();
+  updateChangelogCount();
 }
 
 function updateAsOfNote(){
