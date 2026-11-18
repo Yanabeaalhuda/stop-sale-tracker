@@ -1140,6 +1140,8 @@ function cleanHotelName(val){
 
 function defaultHotelFromLabel(fileLabel, sheetName){
   if(/sheraton/i.test(fileLabel) || /sheraton/i.test(sheetName)) return "Sheraton Makkah";
+  if(/stop\s*sale\s*calendar/i.test(fileLabel) || /tilal/i.test(fileLabel)) return "Tilal Jabal Al Kabah";
+  if(/millinium/i.test(fileLabel) || /millennium/i.test(fileLabel)) return "Millinium Al Naseem";
   if(sheetName && !/sheet|stop\s*sale|table|data/i.test(sheetName)) return cleanHotelName(sheetName);
   const clean = fileLabel.replace(/\.xlsx?$/i,"").replace(/\s*\(\d+\)$/,"").trim();
   return cleanHotelName(clean);
@@ -1396,20 +1398,27 @@ function daysToRanges(days, kind){
   return ranges;
 }
 
+function formatDaysCount(count, lang = currentLang){
+  if(lang === "ar"){
+    if(count === 1) return "يوم واحد";
+    if(count === 2) return "يومان";
+    if(count >= 3 && count <= 10) return `${count} أيام`;
+    return `${count} يوم`;
+  }
+  return count === 1 ? "1 day" : `${count} days`;
+}
+
 function formatRangeText(r, lang = currentLang){
   const count = r.end - r.start + 1;
-  const nights = count > 1 ? count - 1 : 1;
-  const nightsLabel = lang === "ar"
-    ? (count === 1 ? (t.ar.night || "ليلة واحدة") : `${nights} ${t.ar.nights || "ليالٍ"}`)
-    : (count === 1 ? "1 night" : `${nights} nights`);
+  const daysLabel = formatDaysCount(count, lang);
   
   if (r.start === r.end) {
-    return `${fmtDayNumber(r.start, lang)} (${nightsLabel})`;
+    return `${fmtDayNumber(r.start, lang)} (${daysLabel})`;
   }
   const fromTo = lang === "ar"
     ? `من ${fmtDayNumber(r.start, lang)} إلى ${fmtDayNumber(r.end, lang)}`
     : `${fmtDayNumber(r.start, lang)} → ${fmtDayNumber(r.end, lang)}`;
-  return `${fromTo} (${nightsLabel} / ${count} ${lang === "ar" ? (t.ar.days || "أيام") : "days"})`;
+  return `${fromTo} (${daysLabel})`;
 }
 
 function formatDateTime(d = new Date(), lang = currentLang){

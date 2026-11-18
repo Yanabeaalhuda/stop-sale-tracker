@@ -83,7 +83,7 @@ context.__snapshot = vm.runInContext(`(() => {
 
 const expectedHotels = [
   "Conrad Makkah", "Hilton Suites Makkah", "Hilton Makkah Convention", "Double Tree",
-  "Jabal Omar Hyatt Regency", "Sheraton MAKKAH", "Tilal Jabal Al Kabah"
+  "Jabal Omar Hyatt Regency", "Sheraton MAKKAH", "Tilal Jabal Al Kabah", "Millinium Al Naseem"
 ];
 if (context.__snapshot.hotelNames.length !== expectedHotels.length) throw new Error(`Expected ${expectedHotels.length} hotels, found ${context.__snapshot.hotelNames.length}`);
 expectedHotels.forEach(name => {
